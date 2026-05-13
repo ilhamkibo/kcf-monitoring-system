@@ -28,6 +28,9 @@ public class UserService : IUserService
             x.Name,
             x.Email,
             x.Username,
+            x.Role,
+            x.Group?.Name,
+            x.Machine?.Name,
             x.CreatedAt
         )).ToList();
 
@@ -54,6 +57,9 @@ public class UserService : IUserService
             user.Name,
             user.Email,
             user.Username,
+            user.Role,
+            user.Group?.Name,
+            user.Machine?.Name,
             user.CreatedAt
         );
 

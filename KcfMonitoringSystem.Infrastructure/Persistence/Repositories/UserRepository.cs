@@ -17,24 +17,30 @@ public class UserRepository : IUserRepository
 
     public async Task<(List<User> Data, int TotalCount)> GetAllAsync(UserFilter filter)
     {
-        var query = _db.Users.AsQueryable();
+        var query = _db.Users
+            .Include(u => u.Group)
+            .Include(u => u.Machine)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var search = filter.Search.ToLower();
             query = query.Where(x => x.Name.ToLower().Contains(search) || 
-                                     x.Email.ToLower().Contains(search) ||
-                                     x.Username.ToLower().Contains(search));
+                                     (x.Email != null && x.Email.ToLower().Contains(search)) ||
+                                     (x.Username != null && x.Username.ToLower().Contains(search)) ||
+                                     (x.Role != null && x.Role.ToLower().Contains(search)));
         }
 
         var totalCount = await query.CountAsync();
+
+        query = query.OrderBy(x => x.Id);
 
         if (filter.Paginate == true)
         {
             query = query.Skip((filter.Page - 1) * filter.Limit).Take(filter.Limit);
         }
 
-        var data = await query.OrderBy(x => x.Id).ToListAsync();
+        var data = await query.ToListAsync();
 
         return (data, totalCount);
     }
@@ -42,6 +48,8 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByIdAsync(int id)
     {
         return await _db.Users
+            .Include(u => u.Group)
+            .Include(u => u.Machine)
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 }
