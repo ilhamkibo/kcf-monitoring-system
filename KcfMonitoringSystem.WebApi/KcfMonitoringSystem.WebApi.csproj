@@ -10,4 +10,9 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\KcfMonitoringSystem.Application\KcfMonitoringSystem.Application.csproj" />
+    <ProjectReference Include="..\KcfMonitoringSystem.Infrastructure\KcfMonitoringSystem.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

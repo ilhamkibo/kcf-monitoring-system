@@ -6,4 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\KcfMonitoringSystem.Domain\KcfMonitoringSystem.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\" />
+    <Folder Include="Dtos\" />
+    <Folder Include="Filters\" />
+    <Folder Include="Interfaces\Repositories\" />
+  </ItemGroup>
+
 </Project>

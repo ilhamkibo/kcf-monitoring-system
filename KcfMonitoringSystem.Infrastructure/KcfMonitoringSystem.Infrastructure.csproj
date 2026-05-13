@@ -15,4 +15,15 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="Persistence\" />
+    <Folder Include="Persistence\Repositories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KcfMonitoringSystem.Application\KcfMonitoringSystem.Application.csproj" />
+    <ProjectReference Include="..\KcfMonitoringSystem.Domain\KcfMonitoringSystem.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
