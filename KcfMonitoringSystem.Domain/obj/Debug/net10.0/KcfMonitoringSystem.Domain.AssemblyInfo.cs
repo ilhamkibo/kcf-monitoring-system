@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KcfMonitoringSystem.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b6b2558be10c6d65c99c6077c9e11d1a6ae1c397")]
 [assembly: System.Reflection.AssemblyProductAttribute("KcfMonitoringSystem.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KcfMonitoringSystem.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

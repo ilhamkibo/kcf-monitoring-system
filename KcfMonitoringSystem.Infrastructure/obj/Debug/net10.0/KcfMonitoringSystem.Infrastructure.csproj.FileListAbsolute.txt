@@ -1,0 +1,14 @@
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\bin\Debug\net10.0\KcfMonitoringSystem.Infrastructure.deps.json
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\bin\Debug\net10.0\KcfMonitoringSystem.Infrastructure.runtimeconfig.json
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\bin\Debug\net10.0\KcfMonitoringSystem.Infrastructure.dll
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\bin\Debug\net10.0\KcfMonitoringSystem.Infrastructure.pdb
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.csproj.AssemblyReference.cache
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.AssemblyInfoInputs.cache
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.AssemblyInfo.cs
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.csproj.CoreCompileInputs.cache
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.dll
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\refint\KcfMonitoringSystem.Infrastructure.dll
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.pdb
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\KcfMonitoringSystem.Infrastructure.genruntimeconfig.cache
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Infrastructure\obj\Debug\net10.0\ref\KcfMonitoringSystem.Infrastructure.dll

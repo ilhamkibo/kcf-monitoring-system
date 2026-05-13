@@ -1,0 +1,11 @@
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\bin\Debug\net10.0\KcfMonitoringSystem.Application.deps.json
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\bin\Debug\net10.0\KcfMonitoringSystem.Application.dll
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\bin\Debug\net10.0\KcfMonitoringSystem.Application.pdb
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\KcfMonitoringSystem.Application.GeneratedMSBuildEditorConfig.editorconfig
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\KcfMonitoringSystem.Application.AssemblyInfoInputs.cache
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\KcfMonitoringSystem.Application.AssemblyInfo.cs
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\KcfMonitoringSystem.Application.csproj.CoreCompileInputs.cache
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\KcfMonitoringSystem.Application.dll
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\refint\KcfMonitoringSystem.Application.dll
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\KcfMonitoringSystem.Application.pdb
+c:\toho\project\kcf\KcfMonitoringSystem\KcfMonitoringSystem.Application\obj\Debug\net10.0\ref\KcfMonitoringSystem.Application.dll

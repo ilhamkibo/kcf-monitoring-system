@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj": {}
+    "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj": {}
   },
   "projects": {
-    "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj": {
+    "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
+        "projectUniqueName": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
         "projectName": "KcfMonitoringSystem.Infrastructure",
-        "projectPath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
+        "projectPath": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\ilham\\.nuget\\packages\\",
-        "outputPath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\obj\\",
+        "outputPath": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -51,9 +51,29 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "MQTTnet": {
+              "target": "Package",
+              "version": "[5.1.0.1559, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[11.0.0-preview.4.26230.115, )"
+              "version": "[10.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "target": "Package",
+              "version": "[10.0.8, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[10.0.1, )"
+            },
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[7.0.0, )"
             }
           },
           "imports": [

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj": {}
+    "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj": {}
   },
   "projects": {
-    "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj": {
+    "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj",
+        "projectUniqueName": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj",
         "projectName": "KcfMonitoringSystem.WebApi",
-        "projectPath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj",
+        "projectPath": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\KcfMonitoringSystem.WebApi.csproj",
         "packagesPath": "C:\\Users\\ilham\\.nuget\\packages\\",
-        "outputPath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\obj\\",
+        "outputPath": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.WebApi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

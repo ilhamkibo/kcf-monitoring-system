@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qLJNPcVtQkI=",
+  "dgSpecHash": "iCoyX3yWYhA=",
   "success": true,
-  "projectFilePath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Worker\\KcfMonitoringSystem.Worker.csproj",
+  "projectFilePath": "c:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Worker\\KcfMonitoringSystem.Worker.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ilham\\.nuget\\packages\\microsoft.extensions.configuration\\10.0.5\\microsoft.extensions.configuration.10.0.5.nupkg.sha512",
     "C:\\Users\\ilham\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\10.0.5\\microsoft.extensions.configuration.abstractions.10.0.5.nupkg.sha512",
