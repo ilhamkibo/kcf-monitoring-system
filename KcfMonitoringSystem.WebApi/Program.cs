@@ -8,6 +8,7 @@ using KcfMonitoringSystem.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
+using Scalar.AspNetCore;
 
 // Setup Serilog
 Log.Logger = new LoggerConfiguration()
@@ -43,6 +44,12 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
+        app.MapScalarApiReference(opt =>
+        {
+            opt.Title = "KCF Monitoring System";
+            opt.Theme = ScalarTheme.Default;
+            opt.Layout = ScalarLayout.Classic;
+        });
     }
 
     // Automatically apply migrations and run seeder
