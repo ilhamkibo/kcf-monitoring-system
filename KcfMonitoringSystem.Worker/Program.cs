@@ -2,19 +2,44 @@ using KcfMonitoringSystem.Infrastructure.Persistence;
 using KcfMonitoringSystem.Worker;
 using KcfMonitoringSystem.Worker.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
-var builder = Host.CreateApplicationBuilder(args);
+// Setup Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File("Logs/worker-.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
-// Bind MQTT settings from configuration
-builder.Services.Configure<MqttSettings>(
-    builder.Configuration.GetSection("Mqtt"));
+try
+{
+    Log.Information("Starting KCF Monitoring Worker...");
 
-// Register AppDbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    var builder = Host.CreateApplicationBuilder(args);
 
-// Register MqttWorker as a hosted service
-builder.Services.AddHostedService<MqttWorker>();
+    // Replace default logging with Serilog
+    builder.Services.AddSerilog();
 
-var host = builder.Build();
-host.Run();
+    // Bind MQTT settings from configuration
+    builder.Services.Configure<MqttSettings>(
+        builder.Configuration.GetSection("Mqtt"));
+
+    // Register AppDbContext
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+    // Register MqttWorker as a hosted service
+    builder.Services.AddHostedService<MqttWorker>();
+
+    var host = builder.Build();
+    host.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Worker terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

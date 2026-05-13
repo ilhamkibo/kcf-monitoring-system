@@ -7,54 +7,78 @@ using KcfMonitoringSystem.Infrastructure.Persistence;
 using KcfMonitoringSystem.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+// Setup Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File("Logs/webapi-.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.MapOpenApi();
+    Log.Information("Starting KCF Monitoring WebApi...");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Replace default logging with Serilog
+    builder.Host.UseSerilog();
+
+    // Add services to the container.
+    builder.Services.AddOpenApi();
+    builder.Services.AddEndpointsApiExplorer();
+
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
+    builder.Services.AddScoped<IUserService, UserService>();
+
+    var app = builder.Build();
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+    }
+
+    // Automatically apply migrations and run seeder
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        await DbSeeder.SeedAsync(db);
+    }
+
+    // Minimal APIs
+    var usersGroup = app.MapGroup("/api/users");
+
+    usersGroup.MapGet("/", async (IUserService userService, [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? search = null, [FromQuery] bool paginate = true) =>
+    {
+        var filter = new UserFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
+        var response = await userService.GetAllAsync(filter);
+        return Results.Ok(response);
+    });
+
+    usersGroup.MapGet("/{id}", async (int id, IUserService userService) =>
+    {
+        var response = await userService.GetByIdAsync(id);
+        if (!response.Status)
+            return Results.NotFound(response);
+
+        return Results.Ok(response);
+    });
+
+    app.Run();
 }
-
-// Automatically apply migrations and run seeder
-using (var scope = app.Services.CreateScope())
+catch (Exception ex)
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    await DbSeeder.SeedAsync(db);
+    Log.Fatal(ex, "Application terminated unexpectedly");
 }
-
-// Minimal APIs
-var usersGroup = app.MapGroup("/api/users");
-// usersGroup.MapGet("/", async ([AsParameters] UserFilter filter, IUserService userService) =>
-// {
-usersGroup.MapGet("/", async (IUserService userService, [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? search = null, [FromQuery] bool paginate = true) =>
+finally
 {
-    var filter = new UserFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
-    var response = await userService.GetAllAsync(filter);
-    return Results.Ok(response);
-});
-
-usersGroup.MapGet("/{id}", async (int id, IUserService userService) =>
-{
-    var response = await userService.GetByIdAsync(id);
-    if (!response.Status)
-        return Results.NotFound(response);
-
-    return Results.Ok(response);
-});
-
-app.Run();
+    Log.CloseAndFlush();
+}
