@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "dgSpecHash": "M7ZwnttF9IA=",
+  "success": false,
+  "projectFilePath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ilham\\.nuget\\packages\\microsoft.entityframeworkcore\\11.0.0-preview.4.26230.115\\microsoft.entityframeworkcore.11.0.0-preview.4.26230.115.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1202",
+      "level": "Error",
+      "message": "Package Microsoft.EntityFrameworkCore 11.0.0-preview.4.26230.115 is not compatible with net10.0 (.NETCoreApp,Version=v10.0). Package Microsoft.EntityFrameworkCore 11.0.0-preview.4.26230.115 supports: net11.0 (.NETCoreApp,Version=v11.0)",
+      "projectPath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
+      "filePath": "C:\\toho\\project\\kcf\\KcfMonitoringSystem\\KcfMonitoringSystem.Infrastructure\\KcfMonitoringSystem.Infrastructure.csproj",
+      "libraryId": "Microsoft.EntityFrameworkCore",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
