@@ -1,8 +1,25 @@
+using KcfMonitoringSystem.Application.Interfaces.Repositories;
+using KcfMonitoringSystem.Application.Services;
+using KcfMonitoringSystem.Application.Filters;
+using KcfMonitoringSystem.Infrastructure;
+using KcfMonitoringSystem.Infrastructure.Data;
+using KcfMonitoringSystem.Infrastructure.Persistence;
+using KcfMonitoringSystem.Infrastructure.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
@@ -12,30 +29,32 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
+// Automatically apply migrations and run seeder
+using (var scope = app.Services.CreateScope())
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+    await DbSeeder.SeedAsync(db);
+}
 
-app.MapGet("/weatherforecast", () =>
+// Minimal APIs
+var usersGroup = app.MapGroup("/api/users");
+// usersGroup.MapGet("/", async ([AsParameters] UserFilter filter, IUserService userService) =>
+// {
+usersGroup.MapGet("/", async (IUserService userService, [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? search = null, [FromQuery] bool paginate = true) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var filter = new UserFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
+    var response = await userService.GetAllAsync(filter);
+    return Results.Ok(response);
+});
+
+usersGroup.MapGet("/{id}", async (int id, IUserService userService) =>
+{
+    var response = await userService.GetByIdAsync(id);
+    if (!response.Status)
+        return Results.NotFound(response);
+
+    return Results.Ok(response);
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
