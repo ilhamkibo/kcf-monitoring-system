@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<Machine> Machines => Set<Machine>();
+    public DbSet<Production> Productions => Set<Production>();
+    public DbSet<Product> Products => Set<Product>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,5 +33,28 @@ public class AppDbContext : DbContext
             .WithMany(m => m.Users)
             .HasForeignKey(u => u.MachineId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Production → Machine (Many-to-One)
+        modelBuilder.Entity<Production>()
+            .HasOne(p => p.Machine)
+            .WithMany(m => m.Productions)
+            .HasForeignKey(p => p.MachineId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Production → User (Many-to-One)
+        modelBuilder.Entity<Production>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.Productions)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Product
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasIndex(p => p.ProductNo).IsUnique();
+            entity.Property(p => p.ProductNo).IsRequired().HasMaxLength(50);
+            entity.Property(p => p.PartName).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.PartNo).IsRequired().HasMaxLength(100);
+        });
     }
 }
