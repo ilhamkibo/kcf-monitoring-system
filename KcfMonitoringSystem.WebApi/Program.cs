@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Scalar.AspNetCore;
+using KcfMonitoringSystem.WebApi.Endpoints;
 
 // Setup Serilog
 Log.Logger = new LoggerConfiguration()
@@ -37,6 +38,10 @@ try
 
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<IProductionRepository, ProductionRepository>();
+    builder.Services.AddScoped<IProductionService, ProductionService>();
+    builder.Services.AddScoped<IProductRepository, ProductRepository>();
+    builder.Services.AddScoped<IProductService, ProductService>();
 
     var app = builder.Build();
 
@@ -61,23 +66,9 @@ try
     }
 
     // Minimal APIs
-    var usersGroup = app.MapGroup("/api/users");
-
-    usersGroup.MapGet("/", async (IUserService userService, [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? search = null, [FromQuery] bool paginate = true) =>
-    {
-        var filter = new UserFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
-        var response = await userService.GetAllAsync(filter);
-        return Results.Ok(response);
-    });
-
-    usersGroup.MapGet("/{id}", async (int id, IUserService userService) =>
-    {
-        var response = await userService.GetByIdAsync(id);
-        if (!response.Status)
-            return Results.NotFound(response);
-
-        return Results.Ok(response);
-    });
+    app.MapUserEndpoints();
+    app.MapProductionEndpoints();
+    app.MapProductEndpoints();
 
     app.Run();
 }
