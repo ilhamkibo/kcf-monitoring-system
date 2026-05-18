@@ -19,4 +19,7 @@ public class User
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    // Navigation
+    public ICollection<Production> Productions { get; set; } = new List<Production>();
 }

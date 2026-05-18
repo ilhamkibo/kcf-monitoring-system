@@ -18,7 +18,7 @@ public class UserService : IUserService
     {
         _repository = repository;
     }
-    
+
     public async Task<ApiResponse<List<UserDto>>> GetAllAsync(UserFilter filter)
     {
         var (users, totalCount) = await _repository.GetAllAsync(filter);

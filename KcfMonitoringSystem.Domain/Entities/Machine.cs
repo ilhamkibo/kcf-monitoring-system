@@ -11,4 +11,5 @@ public class Machine
 
     // Navigation
     public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<Production> Productions { get; set; } = new List<Production>();
 }

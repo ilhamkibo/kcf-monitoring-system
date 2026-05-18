@@ -25,7 +25,7 @@ public class UserRepository : IUserRepository
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var search = filter.Search.ToLower();
-            query = query.Where(x => x.Name.ToLower().Contains(search) || 
+            query = query.Where(x => x.Name.ToLower().Contains(search) ||
                                      (x.Email != null && x.Email.ToLower().Contains(search)) ||
                                      (x.Username != null && x.Username.ToLower().Contains(search)) ||
                                      (x.Role != null && x.Role.ToLower().Contains(search)));
