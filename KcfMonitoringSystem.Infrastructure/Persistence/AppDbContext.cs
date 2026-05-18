@@ -48,6 +48,13 @@ public class AppDbContext : DbContext
             .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Production → Product (Many-to-One)
+        modelBuilder.Entity<Production>()
+            .HasOne(p => p.Product)
+            .WithMany()
+            .HasForeignKey(p => p.ProductId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Product
         modelBuilder.Entity<Product>(entity =>
         {

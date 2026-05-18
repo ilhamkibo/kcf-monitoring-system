@@ -18,14 +18,23 @@ public static class ProductionSeeder
             .Where(u => u.Role == "Operator" && u.MachineId != null)
             .ToListAsync();
 
+        // ambil semua product untuk random assignment
+        var products = await db.Products.ToListAsync();
+
         var productions = new List<Production>();
 
         foreach (var user in operators)
         {
+            // pilih random product
+            var productId = products.Count > 0
+                ? products[Random.Shared.Next(products.Count)].Id
+                : (int?)null;
+
             productions.Add(new Production
             {
                 UserId = user.Id,
                 MachineId = user.MachineId!.Value,
+                ProductId = productId,
                 Quantity = Random.Shared.Next(100, 500),
                 CreatedAt = now,
                 UpdatedAt = now

@@ -20,6 +20,7 @@ public class ProductionRepository : IProductionRepository
         var query = _db.Productions
             .Include(p => p.Machine)
             .Include(p => p.User)
+            .Include(p => p.Product)
             .AsQueryable();
 
         if (filter.MachineId.HasValue)
@@ -36,7 +37,9 @@ public class ProductionRepository : IProductionRepository
         {
             var search = filter.Search.ToLower();
             query = query.Where(x => x.Machine.Name.ToLower().Contains(search) ||
-                                     x.User.Name.ToLower().Contains(search));
+                                     x.User.Name.ToLower().Contains(search) ||
+                                     (x.Product != null && x.Product.ProductNo.ToLower().Contains(search)) ||
+                                     (x.Product != null && x.Product.PartName.ToLower().Contains(search)));
         }
 
         var totalCount = await query.CountAsync();
@@ -58,6 +61,7 @@ public class ProductionRepository : IProductionRepository
         return await _db.Productions
             .Include(p => p.Machine)
             .Include(p => p.User)
+            .Include(p => p.Product)
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 }

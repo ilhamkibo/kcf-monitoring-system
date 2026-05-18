@@ -24,6 +24,9 @@ public class ProductionService : IProductionService
             x.Machine?.Name ?? "",
             x.UserId,
             x.User?.Name ?? "",
+            x.ProductId,
+            x.Product?.ProductNo,
+            x.Product?.PartName,
             x.Quantity,
             x.CreatedAt
         )).ToList();
@@ -52,6 +55,9 @@ public class ProductionService : IProductionService
             production.Machine?.Name ?? "",
             production.UserId,
             production.User?.Name ?? "",
+            production.ProductId,
+            production.Product?.ProductNo,
+            production.Product?.PartName,
             production.Quantity,
             production.CreatedAt
         );

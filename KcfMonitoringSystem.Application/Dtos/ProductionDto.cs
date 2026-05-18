@@ -1,5 +1,3 @@
-using System;
-
 namespace KcfMonitoringSystem.Application.Dtos;
 
 public record ProductionDto(
@@ -8,6 +6,9 @@ public record ProductionDto(
     string MachineName,
     int UserId,
     string UserName,
+    int? ProductId,
+    string? ProductNo,
+    string? PartName,
     int Quantity,
     DateTime CreatedAt
 );
