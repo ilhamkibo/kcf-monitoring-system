@@ -9,7 +9,22 @@ public static class ProductionSeeder
     public static async Task SeedAsync(AppDbContext db)
     {
         if (await db.Productions.AnyAsync())
+        {
+            var existingProductions = await db.Productions.Where(p => p.ProductId == null).ToListAsync();
+            if (existingProductions.Any())
+            {
+                var allProducts = await db.Products.ToListAsync();
+                if (allProducts.Any())
+                {
+                    foreach (var prod in existingProductions)
+                    {
+                        prod.ProductId = allProducts[Random.Shared.Next(allProducts.Count)].Id;
+                    }
+                    await db.SaveChangesAsync();
+                }
+            }
             return;
+        }
 
         var now = DateTime.UtcNow;
 
