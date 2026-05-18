@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using KcfMonitoringSystem.Application.Dtos;
-using KcfMonitoringSystem.Application.Interfaces.Repositories;
-using KcfMonitoringSystem.Application.Services;
-using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Common;
+using KcfMonitoringSystem.Application.Dtos;
+using KcfMonitoringSystem.Application.Filters;
+using KcfMonitoringSystem.Application.Interfaces.Repositories;
 
-namespace KcfMonitoringSystem.Infrastructure;
+namespace KcfMonitoringSystem.Application.Services;
 
 public class UserService : IUserService
 {

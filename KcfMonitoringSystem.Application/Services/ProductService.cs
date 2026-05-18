@@ -2,9 +2,8 @@ using KcfMonitoringSystem.Application.Common;
 using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Interfaces.Repositories;
-using KcfMonitoringSystem.Application.Services;
 
-namespace KcfMonitoringSystem.Infrastructure;
+namespace KcfMonitoringSystem.Application.Services;
 
 public class ProductService : IProductService
 {

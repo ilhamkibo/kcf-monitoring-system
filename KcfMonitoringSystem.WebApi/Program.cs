@@ -1,7 +1,5 @@
 using KcfMonitoringSystem.Application.Interfaces.Repositories;
 using KcfMonitoringSystem.Application.Services;
-using KcfMonitoringSystem.Application.Filters;
-using KcfMonitoringSystem.Infrastructure;
 using KcfMonitoringSystem.Infrastructure.Data;
 using KcfMonitoringSystem.Infrastructure.Persistence;
 using KcfMonitoringSystem.Infrastructure.Persistence.Repositories;

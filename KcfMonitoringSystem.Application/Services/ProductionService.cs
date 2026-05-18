@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using KcfMonitoringSystem.Application.Dtos;
-using KcfMonitoringSystem.Application.Interfaces.Repositories;
-using KcfMonitoringSystem.Application.Services;
-using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Common;
+using KcfMonitoringSystem.Application.Dtos;
+using KcfMonitoringSystem.Application.Filters;
+using KcfMonitoringSystem.Application.Interfaces.Repositories;
 
-namespace KcfMonitoringSystem.Infrastructure;
+namespace KcfMonitoringSystem.Application.Services;
 
 public class ProductionService : IProductionService
 {
@@ -18,7 +13,7 @@ public class ProductionService : IProductionService
     {
         _repository = repository;
     }
-    
+
     public async Task<ApiResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter)
     {
         var (productions, totalCount) = await _repository.GetAllAsync(filter);
