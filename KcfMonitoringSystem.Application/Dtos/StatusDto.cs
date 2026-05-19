@@ -6,5 +6,5 @@ public record StatusDto(
     string MachineName,
     int Code,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime? UpdatedAt
 );

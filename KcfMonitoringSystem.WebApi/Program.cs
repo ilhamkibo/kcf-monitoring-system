@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Scalar.AspNetCore;
 using KcfMonitoringSystem.WebApi.Endpoints;
+using KcfMonitoringSystem.Application.Interfaces.Services;
+using KcfMonitoringSystem.Domain.Entities;
 
 // Setup Serilog
 Log.Logger = new LoggerConfiguration()
@@ -41,6 +43,8 @@ try
     builder.Services.AddScoped<IProductionService, ProductionService>();
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<IProductService, ProductService>();
+    builder.Services.AddScoped<IStatusRepository, StatusRepository>();
+    builder.Services.AddScoped<IStatusService, StatusService>();
 
     var app = builder.Build();
 
@@ -118,6 +122,7 @@ try
     app.MapUserEndpoints();
     app.MapProductionEndpoints();
     app.MapProductEndpoints();
+    app.MapStatusEndpoints();
 
     app.Run();
 }
