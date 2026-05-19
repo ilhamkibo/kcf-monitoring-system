@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Machine> Machines => Set<Machine>();
     public DbSet<Production> Productions => Set<Production>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Status> Statuses => Set<Status>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,7 +52,7 @@ public class AppDbContext : DbContext
         // Production → Product (Many-to-One)
         modelBuilder.Entity<Production>()
             .HasOne(p => p.Product)
-            .WithMany()
+            .WithMany(p => p.Productions)
             .HasForeignKey(p => p.ProductId)
             .OnDelete(DeleteBehavior.SetNull);
 
@@ -63,5 +64,12 @@ public class AppDbContext : DbContext
             entity.Property(p => p.PartName).IsRequired().HasMaxLength(200);
             entity.Property(p => p.PartNo).IsRequired().HasMaxLength(100);
         });
+
+        // Status
+        modelBuilder.Entity<Status>()
+            .HasOne(s => s.Machine)
+            .WithMany(m => m.Statuses)
+            .HasForeignKey(s => s.MachineId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

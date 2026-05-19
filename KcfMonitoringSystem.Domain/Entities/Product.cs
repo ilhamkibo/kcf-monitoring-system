@@ -8,4 +8,7 @@ public class Product
     public required string PartNo { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    // Navigation
+    public ICollection<Production> Productions { get; set; } = new List<Production>();
 }
