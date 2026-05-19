@@ -17,7 +17,7 @@ public static class ProductEndpoints
             return Results.Ok(response);
         });
 
-        group.MapGet("/{id:int}", async (int id, IProductService productService) =>
+        group.MapGet("/{id}", async (int id, IProductService productService) =>
         {
             var response = await productService.GetByIdAsync(id);
             if (!response.Status)

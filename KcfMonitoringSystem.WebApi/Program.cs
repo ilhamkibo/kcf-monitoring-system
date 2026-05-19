@@ -13,6 +13,7 @@ using KcfMonitoringSystem.WebApi.Endpoints;
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", Serilog.Events.LogEventLevel.Fatal)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
     .WriteTo.File("Logs/webapi-.log", rollingInterval: RollingInterval.Day)
@@ -42,6 +43,56 @@ try
     builder.Services.AddScoped<IProductService, ProductService>();
 
     var app = builder.Build();
+
+    // Global Exception Handler
+    app.UseExceptionHandler(exceptionHandlerApp =>
+    {
+        exceptionHandlerApp.Run(async context =>
+        {
+            var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+            var exception = exceptionHandlerPathFeature?.Error;
+
+            context.Response.ContentType = "application/json";
+
+            if (exception is BadHttpRequestException badRequestEx)
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+                // Parse "Failed to bind parameter "int limit" from "as""
+                // var regex = new System.Text.RegularExpressions.Regex(@"Failed to bind parameter ""([^""]+)"" from ""([^""]+)""");
+                var regex = new System.Text.RegularExpressions.Regex(@"Failed to bind parameter ""([^""]+)"" from ""([^""]*)""");
+
+                var match = regex.Match(badRequestEx.Message);
+
+                if (match.Success)
+                {
+                    var paramPart = match.Groups[1].Value.Split(' ').Last();
+                    var fieldName = char.ToUpper(paramPart[0]) + paramPart.Substring(1);
+                    var invalidValue = match.Groups[2].Value;
+
+                    var errors = new System.Collections.Generic.Dictionary<string, string[]>
+                    {
+                        { fieldName, new[] { $"The value '{invalidValue}' is not valid for {fieldName}." } }
+                    };
+
+                    var response = KcfMonitoringSystem.Application.Common.ApiResponse<object>.Error("Error Validations", errors);
+                    await context.Response.WriteAsJsonAsync(response);
+                }
+                else
+                {
+                    var response = KcfMonitoringSystem.Application.Common.ApiResponse<object>.Error($"Invalid request: {badRequestEx.Message}");
+                    await context.Response.WriteAsJsonAsync(response);
+                }
+            }
+            else if (exception != null)
+            {
+                Log.Error(exception, "An unhandled exception occurred in the API");
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                var response = KcfMonitoringSystem.Application.Common.ApiResponse<object>.Error("An unexpected error occurred.");
+                await context.Response.WriteAsJsonAsync(response);
+            }
+        });
+    });
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
