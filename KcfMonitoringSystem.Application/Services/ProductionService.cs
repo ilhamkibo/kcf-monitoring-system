@@ -16,6 +16,7 @@ public class ProductionService : IProductionService
 
     public async Task<ApiResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter)
     {
+        NormalizeDateFilter(filter);
         var (productions, totalCount) = await _repository.GetAllAsync(filter);
 
         var data = productions.Select(x => new ProductionDto(
@@ -28,40 +29,48 @@ public class ProductionService : IProductionService
             x.Product?.ProductNo,
             x.Product?.PartName,
             x.Quantity,
-            x.CreatedAt
+            x.CreatedAt.ToLocalTime()
         )).ToList();
 
-        var pagination = new PaginationMetadata
+        PaginationMetadata? pagination = null;
+        if (filter.Paginate == true)
         {
-            Page = filter.Page,
-            Limit = filter.Limit,
-            Total = totalCount,
-            TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
-        };
+            pagination = new PaginationMetadata
+            {
+                Page = filter.Page,
+                Limit = filter.Limit,
+                Total = totalCount,
+                TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
+            };
+        }
 
         return ApiResponse<List<ProductionDto>>.Ok(data, "Success", pagination);
     }
 
-    public async Task<ApiResponse<ProductionDto>> GetByIdAsync(int id)
+    private void NormalizeDateFilter(ProductionFilter filter)
     {
-        var production = await _repository.GetByIdAsync(id);
+        if (!filter.StartDate.HasValue && !filter.EndDate.HasValue)
+            return;
 
-        if (production == null)
-            return ApiResponse<ProductionDto>.Error("Production not found");
+        if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+        {
+            var min = filter.StartDate.Value <= filter.EndDate.Value
+                ? filter.StartDate.Value
+                : filter.EndDate.Value;
 
-        var data = new ProductionDto(
-            production.Id,
-            production.MachineId,
-            production.Machine?.Name ?? "",
-            production.UserId,
-            production.User?.Name ?? "",
-            production.ProductId,
-            production.Product?.ProductNo,
-            production.Product?.PartName,
-            production.Quantity,
-            production.CreatedAt
-        );
+            var max = filter.StartDate.Value >= filter.EndDate.Value
+                ? filter.StartDate.Value
+                : filter.EndDate.Value;
 
-        return ApiResponse<ProductionDto>.Ok(data);
+            filter.StartDate = DateTime.SpecifyKind(min.Date, DateTimeKind.Local).ToUniversalTime();
+            filter.EndDate = DateTime.SpecifyKind(max.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime();
+        }
+        else
+        {
+            var singleDate = (filter.StartDate ?? filter.EndDate)!.Value.Date;
+
+            filter.StartDate = DateTime.SpecifyKind(singleDate, DateTimeKind.Local).ToUniversalTime();
+            filter.EndDate = DateTime.SpecifyKind(singleDate.AddDays(1), DateTimeKind.Local).ToUniversalTime();
+        }
     }
 }

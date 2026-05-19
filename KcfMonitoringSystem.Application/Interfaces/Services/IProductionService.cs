@@ -8,5 +8,4 @@ namespace KcfMonitoringSystem.Application.Services;
 public interface IProductionService
 {
     Task<ApiResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter);
-    Task<ApiResponse<ProductionDto>> GetByIdAsync(int id);
 }

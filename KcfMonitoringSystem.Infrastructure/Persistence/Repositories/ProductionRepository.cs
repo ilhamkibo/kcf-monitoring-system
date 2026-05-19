@@ -28,6 +28,21 @@ public class ProductionRepository : IProductionRepository
             query = query.Where(x => x.MachineId == filter.MachineId.Value);
         }
 
+        if (filter.StartDate.HasValue)
+        {
+            query = query.Where(x => x.CreatedAt >= filter.StartDate.Value);
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            query = query.Where(x => x.CreatedAt < filter.EndDate.Value);
+        }
+
+        if (filter.PartId.HasValue)
+        {
+            query = query.Where(x => x.ProductId == filter.PartId.Value);
+        }
+
         if (filter.UserId.HasValue)
         {
             query = query.Where(x => x.UserId == filter.UserId.Value);
@@ -54,14 +69,5 @@ public class ProductionRepository : IProductionRepository
         var data = await query.ToListAsync();
 
         return (data, totalCount);
-    }
-
-    public async Task<Production?> GetByIdAsync(int id)
-    {
-        return await _db.Productions
-            .Include(p => p.Machine)
-            .Include(p => p.User)
-            .Include(p => p.Product)
-            .FirstOrDefaultAsync(x => x.Id == id);
     }
 }
