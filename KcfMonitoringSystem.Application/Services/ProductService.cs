@@ -23,16 +23,20 @@ public class ProductService : IProductService
             x.ProductNo,
             x.PartName,
             x.PartNo,
-            x.CreatedAt
+            x.CreatedAt.ToLocalTime()
         )).ToList();
 
-        var pagination = new PaginationMetadata
+        PaginationMetadata? pagination = null;
+        if (filter.Paginate == true)
         {
-            Page = filter.Page,
-            Limit = filter.Limit,
-            Total = totalCount,
-            TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
-        };
+            pagination = new PaginationMetadata
+            {
+                Page = filter.Page,
+                Limit = filter.Limit,
+                Total = totalCount,
+                TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
+            };
+        }
 
         return ApiResponse<List<ProductDto>>.Ok(data, "Success", pagination);
     }
@@ -49,7 +53,7 @@ public class ProductService : IProductService
             product.ProductNo,
             product.PartName,
             product.PartNo,
-            product.CreatedAt
+            product.CreatedAt.ToLocalTime()
         );
 
         return ApiResponse<ProductDto>.Ok(data);
@@ -67,7 +71,7 @@ public class ProductService : IProductService
             product.ProductNo,
             product.PartName,
             product.PartNo,
-            product.CreatedAt
+            product.CreatedAt.ToLocalTime()
         );
 
         return ApiResponse<ProductDto>.Ok(data);

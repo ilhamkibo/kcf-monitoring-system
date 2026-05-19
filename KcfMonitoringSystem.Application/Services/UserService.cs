@@ -26,16 +26,20 @@ public class UserService : IUserService
             x.Role,
             x.Group?.Name,
             x.Machine?.Name,
-            x.CreatedAt
+            x.CreatedAt.ToLocalTime()
         )).ToList();
 
-        var pagination = new PaginationMetadata
+        PaginationMetadata? pagination = null;
+        if (filter.Paginate == true)
         {
-            Page = filter.Page,
-            Limit = filter.Limit,
-            Total = totalCount,
-            TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
-        };
+            pagination = new PaginationMetadata
+            {
+                Page = filter.Page,
+                Limit = filter.Limit,
+                Total = totalCount,
+                TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
+            };
+        }
 
         return ApiResponse<List<UserDto>>.Ok(data, "Success", pagination);
     }
@@ -55,7 +59,7 @@ public class UserService : IUserService
             user.Role,
             user.Group?.Name,
             user.Machine?.Name,
-            user.CreatedAt
+            user.CreatedAt.ToLocalTime()
         );
 
         return ApiResponse<UserDto>.Ok(data);
