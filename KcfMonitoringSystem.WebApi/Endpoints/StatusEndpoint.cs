@@ -26,5 +26,37 @@ public static class StatusEndpoints
             var response = await statusService.GetAllAsync(filter);
             return Results.Ok(response);
         });
+
+        group.MapGet("/timeline", async (IStatusService statusService, [FromQuery] string? search = null, [FromQuery] int? machineId = null, [FromQuery] int? code = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null, [FromQuery] int? userId = null, [FromQuery] int? productId = null) =>
+        {
+            var filter = new StatusFilter
+            {
+                Search = search,
+                MachineId = machineId,
+                Code = code,
+                StartDate = startDate,
+                EndDate = endDate,
+                UserId = userId,
+                ProductId = productId
+            };
+            var response = await statusService.GetTimelineAsync(filter);
+            return Results.Ok(response);
+        });
+
+        group.MapGet("/activity", async (IStatusService statusService, [FromQuery] string? search = null, [FromQuery] int? machineId = null, [FromQuery] int? code = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null, [FromQuery] int? userId = null, [FromQuery] int? productId = null) =>
+        {
+            var filter = new StatusFilter
+            {
+                Search = search,
+                MachineId = machineId,
+                Code = code,
+                StartDate = startDate,
+                EndDate = endDate,
+                UserId = userId,
+                ProductId = productId
+            };
+            var response = await statusService.GetActivityAsync(filter);
+            return Results.Ok(response);
+        });
     }
 }

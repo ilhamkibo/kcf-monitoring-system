@@ -65,11 +65,25 @@ public class AppDbContext : DbContext
             entity.Property(p => p.PartNo).IsRequired().HasMaxLength(100);
         });
 
-        // Status
+        // Status -> Machine (Many-to-One)
         modelBuilder.Entity<Status>()
             .HasOne(s => s.Machine)
             .WithMany(m => m.Statuses)
             .HasForeignKey(s => s.MachineId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Status → User (Many-to-One)
+        modelBuilder.Entity<Status>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.Statuses)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Status → Product (Many-to-One)
+        modelBuilder.Entity<Status>()
+            .HasOne(p => p.Product)
+            .WithMany(p => p.Statuses)
+            .HasForeignKey(p => p.ProductId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

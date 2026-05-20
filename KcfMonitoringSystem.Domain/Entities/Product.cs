@@ -11,4 +11,5 @@ public class Product
 
     // Navigation
     public ICollection<Production> Productions { get; set; } = new List<Production>();
+    public ICollection<Status> Statuses { get; set; } = new List<Status>();
 }

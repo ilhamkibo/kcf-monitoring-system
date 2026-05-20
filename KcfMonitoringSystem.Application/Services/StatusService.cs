@@ -30,7 +30,8 @@ public class StatusService : IStatusService
                 x.Machine.Name,
                 x.Code,
                 x.CreatedAt.ToLocalTime(),
-                x.UpdatedAt?.ToLocalTime()
+                x.UpdatedAt?.ToLocalTime(),
+                x.Duration
             )
         ).ToList();
 
@@ -47,5 +48,56 @@ public class StatusService : IStatusService
         }
 
         return ApiResponse<List<StatusDto>>.Ok(data, "Success", pagination);
+    }
+
+    public async Task<ApiResponse<List<StatusTimelineDto>>> GetTimelineAsync(StatusFilter filter)
+    {
+        var (start, end) = DateFilterHelper.Normalize(filter.StartDate, filter.EndDate);
+        filter.StartDate = start;
+        filter.EndDate = end;
+
+        var statuses = await _repository.GetTimelineStatusesAsync(filter);
+
+        var data = statuses
+            .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
+            .Select(g => new StatusTimelineDto(
+                g.Key.MachineId,
+                g.Key.MachineName,
+                g.Select(s => new TimelineDto(
+                    s.CreatedAt.ToLocalTime(),
+                    s.UpdatedAt?.ToLocalTime(),
+                    s.Code
+                )).ToList()
+            ))
+            .ToList();
+
+        return ApiResponse<List<StatusTimelineDto>>.Ok(data, "Success");
+    }
+
+    public async Task<ApiResponse<List<ActivityDto>>> GetActivityAsync(StatusFilter filter)
+    {
+        var (start, end) = DateFilterHelper.Normalize(filter.StartDate, filter.EndDate);
+        filter.StartDate = start;
+        filter.EndDate = end;
+
+        var statuses = await _repository.GetActivityStatusesAsync(filter);
+
+        var data = statuses
+            .GroupBy(s => s.CreatedAt.ToLocalTime().Date)
+            .Select(g => new ActivityDto(
+                g.Key,
+                g.GroupBy(s => new { OperatorName = s.User.Name, ProductName = s.Product.ProductNo })
+                 .Select(sd => new ActivityDetailDto(
+                     sd.Key.OperatorName,
+                     sd.Key.ProductName,
+                     sd.Sum(s => s.Duration)
+                 ))
+                 .OrderBy(x => x.Operator)
+                 .ToList()
+            ))
+            .OrderByDescending(x => x.Date)
+            .ToList();
+
+        return ApiResponse<List<ActivityDto>>.Ok(data, "Success");
     }
 }
