@@ -154,16 +154,22 @@ public class MqttWorker : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var timestamp = message.Timestamp != default ? message.Timestamp : DateTime.UtcNow;
-        int machineId = GetMachineIdFromTopic(topic);
+
+        int? machineId = await GetMachineIdAsync(db, message.Machine.Name, topic);
+        if (machineId == null)
+        {
+            _logger.LogWarning("Skipping message on [{Topic}]: Machine '{MachineName}' or topic ID not found in database.", topic, message.Machine.Name);
+            return;
+        }
 
         var operatorName = message.Machine.Operator?.Trim() ?? string.Empty;
-        var productName = message.Machine.Product?.Trim() ?? string.Empty;
+        var productName = message.Machine.Work?.Trim() ?? string.Empty;
 
         int userId = await GetUserIdAsync(db, operatorName);
         int productId = await GetProductIdAsync(db, productName);
 
-        bool statusChanged = await ProcessStatusAsync(db, machineId, message.Machine.Status, timestamp);
-        bool productionChanged = await ProcessProductionAsync(db, machineId, userId, productId, message.Machine.Qty, timestamp);
+        bool statusChanged = await ProcessStatusAsync(db, machineId.Value, message.Machine.Status, timestamp, userId, productId);
+        bool productionChanged = await ProcessProductionAsync(db, machineId.Value, userId, productId, message.Machine.Qty, timestamp);
 
         await db.SaveChangesAsync();
 
@@ -175,6 +181,29 @@ public class MqttWorker : BackgroundService
         {
             _logger.LogDebug("Successfully processed machine data for [{Topic}] (No state changes)", topic);
         }
+    }
+
+    private async Task<int?> GetMachineIdAsync(AppDbContext db, string machineName, string topic)
+    {
+        // 1. Try to find by NAME if name is not empty or a default placeholder
+        if (!string.IsNullOrWhiteSpace(machineName))
+        {
+            var machine = await db.Machines.FirstOrDefaultAsync(m => m.Name.ToLower() == machineName.ToLower());
+            if (machine != null)
+            {
+                return machine.Id;
+            }
+        }
+
+        // 2. Fallback to topic parsing
+        int topicId = GetMachineIdFromTopic(topic);
+        var machineByTopicId = await db.Machines.FindAsync(topicId);
+        if (machineByTopicId != null)
+        {
+            return machineByTopicId.Id;
+        }
+
+        return null;
     }
 
     private int GetMachineIdFromTopic(string topic)
@@ -191,49 +220,52 @@ public class MqttWorker : BackgroundService
 
     private async Task<int> GetProductIdAsync(AppDbContext db, string productName)
     {
-        var product = await db.Products.FirstOrDefaultAsync(p => 
-            p.PartName.ToLower() == productName.ToLower() || 
-            p.ProductNo.ToLower() == productName.ToLower() || 
+        var product = await db.Products.FirstOrDefaultAsync(p =>
+            p.PartName.ToLower() == productName.ToLower() ||
+            p.ProductNo.ToLower() == productName.ToLower() ||
             p.PartNo.ToLower() == productName.ToLower());
         return product?.Id ?? 1;
     }
 
-    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int statusCode, DateTime timestamp)
+    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int statusCode, DateTime timestamp, int userId, int productId)
     {
         bool isFirstMessageSinceStartup = _initializedMachines.TryAdd(machineId, true);
-
-        if (isFirstMessageSinceStartup)
-        {
-            db.Statuses.Add(new KcfMonitoringSystem.Domain.Entities.Status
-            {
-                MachineId = machineId,
-                Code = statusCode,
-                CreatedAt = timestamp,
-                UpdatedAt = timestamp
-            });
-            return true; // Status changed (forced new entry)
-        }
 
         var lastStatus = await db.Statuses
             .Where(s => s.MachineId == machineId)
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync();
 
-        if (lastStatus != null && lastStatus.Code == statusCode)
+        // Check if the gap since the last update is too large (e.g. worker was offline or machine was powered off)
+        // If the gap is > 2 minutes, we treat this as a new session and do not stretch the previous duration.
+        bool isGapTooLarge = lastStatus != null && 
+            (timestamp - (lastStatus.UpdatedAt ?? lastStatus.CreatedAt)).TotalMinutes > 2;
+
+        if (isFirstMessageSinceStartup || 
+            isGapTooLarge || 
+            lastStatus == null || 
+            lastStatus.Code != statusCode || 
+            lastStatus.UserId != userId || 
+            lastStatus.ProductId != productId)
         {
-            lastStatus.UpdatedAt = timestamp;
-            db.Statuses.Update(lastStatus);
-            return false; // Status didn't change
+            db.Statuses.Add(new KcfMonitoringSystem.Domain.Entities.Status
+            {
+                MachineId = machineId,
+                Code = statusCode,
+                UserId = userId,
+                ProductId = productId,
+                CreatedAt = timestamp,
+                UpdatedAt = timestamp,
+                Duration = 0
+            });
+            return true; // New status or session started
         }
 
-        db.Statuses.Add(new KcfMonitoringSystem.Domain.Entities.Status
-        {
-            MachineId = machineId,
-            Code = statusCode,
-            CreatedAt = timestamp,
-            UpdatedAt = timestamp
-        });
-        return true; // Status changed
+        // Continuous update within the same session
+        lastStatus.UpdatedAt = timestamp;
+        lastStatus.Duration = (int)(timestamp - lastStatus.CreatedAt).TotalSeconds;
+        db.Statuses.Update(lastStatus);
+        return false; // Status didn't change
     }
 
     private async Task<bool> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)

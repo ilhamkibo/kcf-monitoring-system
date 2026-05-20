@@ -4,20 +4,19 @@ namespace KcfMonitoringSystem.Worker.Models;
 
 public class MqttPayloadMachineData
 {
-    [JsonPropertyName("OPERATOR")]
+    [JsonPropertyName("NAME")]
+    public string Name { get; set; } = string.Empty;
+    [JsonPropertyName("OPERATORNAME")]
     public string Operator { get; set; } = string.Empty;
-
+    [JsonPropertyName("WORKNAME")]
+    public string Work { get; set; } = string.Empty;
+    [JsonPropertyName("PRODUCTCOUNTER")]
+    public int Qty { get; set; }
     [JsonPropertyName("STATUS")]
     public int Status { get; set; }
 
-    [JsonPropertyName("TIME COUNTER")]
+    [JsonPropertyName("TIMECOUNTER")]
     public uint TimeCounter { get; set; }
-
-    [JsonPropertyName("PRODUCT")]
-    public string Product { get; set; } = string.Empty;
-
-    [JsonPropertyName("QTY")]
-    public int Qty { get; set; }
 }
 
 public class MqttMachineMessage
