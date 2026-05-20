@@ -22,7 +22,9 @@ public static class MachineSeeder
             new Machine { Name = "SF-100-2", CreatedAt = now, UpdatedAt = now },
             new Machine { Name = "SF-80", CreatedAt = now, UpdatedAt = now },
             new Machine { Name = "SF-50-1", CreatedAt = now, UpdatedAt = now },
-            new Machine { Name = "SF-50-2", CreatedAt = now, UpdatedAt = now }
+            new Machine { Name = "SF-50-2", CreatedAt = now, UpdatedAt = now },
+            new Machine { Name = "SF-50-3", CreatedAt = now, UpdatedAt = now },
+            new Machine { Name = "Jon you", CreatedAt = now, UpdatedAt = now }
         );
 
         await db.SaveChangesAsync();
