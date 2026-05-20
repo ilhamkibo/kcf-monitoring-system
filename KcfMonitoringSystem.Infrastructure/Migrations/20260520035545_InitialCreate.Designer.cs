@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KcfMonitoringSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260518063511_AddProductionTable")]
-    partial class AddProductionTable
+    [Migration("20260520035545_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -71,6 +71,43 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                     b.ToTable("Machines");
                 });
 
+            modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PartNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ProductNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductNo")
+                        .IsUnique();
+
+                    b.ToTable("Products");
+                });
+
             modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Production", b =>
                 {
                     b.Property<int>("Id")
@@ -83,6 +120,9 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("MachineId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProductId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Quantity")
@@ -98,9 +138,48 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
 
                     b.HasIndex("MachineId");
 
+                    b.HasIndex("ProductId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("Productions");
+                });
+
+            modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Status", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Code")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MachineId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MachineId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.User", b =>
@@ -150,16 +229,50 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                     b.HasOne("KcfMonitoringSystem.Domain.Entities.Machine", "Machine")
                         .WithMany("Productions")
                         .HasForeignKey("MachineId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired();
+
+                    b.HasOne("KcfMonitoringSystem.Domain.Entities.Product", "Product")
+                        .WithMany("Productions")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("KcfMonitoringSystem.Domain.Entities.User", "User")
                         .WithMany("Productions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired();
 
                     b.Navigation("Machine");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Status", b =>
+                {
+                    b.HasOne("KcfMonitoringSystem.Domain.Entities.Machine", "Machine")
+                        .WithMany("Statuses")
+                        .HasForeignKey("MachineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KcfMonitoringSystem.Domain.Entities.Product", "Product")
+                        .WithMany("Statuses")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.HasOne("KcfMonitoringSystem.Domain.Entities.User", "User")
+                        .WithMany("Statuses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.Navigation("Machine");
+
+                    b.Navigation("Product");
 
                     b.Navigation("User");
                 });
@@ -190,12 +303,23 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                 {
                     b.Navigation("Productions");
 
+                    b.Navigation("Statuses");
+
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Product", b =>
+                {
+                    b.Navigation("Productions");
+
+                    b.Navigation("Statuses");
                 });
 
             modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.User", b =>
                 {
                     b.Navigation("Productions");
+
+                    b.Navigation("Statuses");
                 });
 #pragma warning restore 612, 618
         }
