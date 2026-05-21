@@ -1,3 +1,5 @@
+using KcfMonitoringSystem.Application.Common;
+using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -15,24 +17,26 @@ public static class ProductEndpoints
             var filter = new ProductFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
             var response = await productService.GetAllAsync(filter);
             return Results.Ok(response);
-        });
+        }).Produces<ApiPagedResponse<List<ProductDto>>>();
 
         group.MapGet("/{id}", async (int id, IProductService productService) =>
         {
             var response = await productService.GetByIdAsync(id);
             if (!response.Status)
-                return Results.NotFound(response);
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
 
             return Results.Ok(response);
-        });
+        }).Produces<ApiResponse<ProductDto>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapGet("/by-product-no/{productNo}", async (string productNo, IProductService productService) =>
         {
             var response = await productService.GetByProductNoAsync(productNo);
             if (!response.Status)
-                return Results.NotFound(response);
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
 
             return Results.Ok(response);
-        });
+        }).Produces<ApiResponse<ProductDto>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
     }
 }

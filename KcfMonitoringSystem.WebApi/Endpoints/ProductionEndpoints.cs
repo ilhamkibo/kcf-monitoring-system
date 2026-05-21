@@ -1,3 +1,5 @@
+using KcfMonitoringSystem.Application.Common;
+using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +28,6 @@ public static class ProductionEndpoints
             };
             var response = await productionService.GetAllAsync(filter);
             return Results.Ok(response);
-        });
+        }).Produces<ApiPagedResponse<List<ProductionDto>>>();
     }
 }

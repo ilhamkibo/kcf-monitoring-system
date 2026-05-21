@@ -92,12 +92,12 @@ try
                         { fieldName, new[] { $"The value '{invalidValue}' is not valid for {fieldName}." } }
                     };
 
-                    var response = KcfMonitoringSystem.Application.Common.ApiResponse<object>.Error("Error Validations", errors);
+                    var response = KcfMonitoringSystem.Application.Common.ApiErrorResponse.Create("Error Validations", errors);
                     await context.Response.WriteAsJsonAsync(response);
                 }
                 else
                 {
-                    var response = KcfMonitoringSystem.Application.Common.ApiResponse<object>.Error($"Invalid request: {badRequestEx.Message}");
+                    var response = KcfMonitoringSystem.Application.Common.ApiErrorResponse.Create($"Invalid request: {badRequestEx.Message}");
                     await context.Response.WriteAsJsonAsync(response);
                 }
             }
@@ -105,7 +105,7 @@ try
             {
                 Log.Error(exception, "An unhandled exception occurred in the API");
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                var response = KcfMonitoringSystem.Application.Common.ApiResponse<object>.Error("An unexpected error occurred.");
+                var response = KcfMonitoringSystem.Application.Common.ApiErrorResponse.Create("An unexpected error occurred.");
                 await context.Response.WriteAsJsonAsync(response);
             }
         });

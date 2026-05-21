@@ -1,4 +1,5 @@
 using KcfMonitoringSystem.Application.Common;
+using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,16 @@ public static class UserEndpoints
             var filter = new UserFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
             var response = await userService.GetAllAsync(filter);
             return Results.Ok(response);
-        });
+        }).Produces<ApiPagedResponse<List<UserDto>>>();
 
         group.MapGet("/{id}", async (int id, IUserService userService) =>
         {
             var response = await userService.GetByIdAsync(id);
             if (!response.Status)
-                return Results.NotFound(response);
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
 
             return Results.Ok(response);
-        });
+        }).Produces<ApiResponse<UserDto>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
     }
 }
