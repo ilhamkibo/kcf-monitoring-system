@@ -31,6 +31,16 @@ try
     builder.Host.UseSerilog();
 
     // Add services to the container.
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+    });
+
     builder.Services.AddOpenApi();
     builder.Services.AddEndpointsApiExplorer();
 
@@ -47,6 +57,9 @@ try
     builder.Services.AddScoped<IStatusService, StatusService>();
 
     var app = builder.Build();
+
+    // Enable CORS
+    app.UseCors("AllowAll");
 
     // Global Exception Handler
     app.UseExceptionHandler(exceptionHandlerApp =>
