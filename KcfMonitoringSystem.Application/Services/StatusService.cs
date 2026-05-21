@@ -15,7 +15,7 @@ public class StatusService : IStatusService
         _repository = repository;
     }
 
-    public async Task<ApiResponse<List<StatusDto>>> GetAllAsync(StatusFilter filter)
+    public async Task<ApiPagedResponse<List<StatusDto>>> GetAllAsync(StatusFilter filter)
     {
         var (start, end) = DateFilterHelper.Normalize(filter.StartDate, filter.EndDate);
         filter.StartDate = start;
@@ -47,7 +47,7 @@ public class StatusService : IStatusService
             };
         }
 
-        return ApiResponse<List<StatusDto>>.Ok(data, "Success", pagination);
+        return ApiPagedResponse<List<StatusDto>>.Ok(data, "Success", pagination);
     }
 
     public async Task<ApiResponse<List<StatusTimelineDto>>> GetTimelineAsync(StatusFilter filter)

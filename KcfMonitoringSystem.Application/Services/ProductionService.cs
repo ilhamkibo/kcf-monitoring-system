@@ -14,7 +14,7 @@ public class ProductionService : IProductionService
         _repository = repository;
     }
 
-    public async Task<ApiResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter)
+    public async Task<ApiPagedResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter)
     {
         var (start, end) = DateFilterHelper.Normalize(filter.StartDate, filter.EndDate);
         filter.StartDate = start;
@@ -47,6 +47,6 @@ public class ProductionService : IProductionService
             };
         }
 
-        return ApiResponse<List<ProductionDto>>.Ok(data, "Success", pagination);
+        return ApiPagedResponse<List<ProductionDto>>.Ok(data, "Success", pagination);
     }
 }

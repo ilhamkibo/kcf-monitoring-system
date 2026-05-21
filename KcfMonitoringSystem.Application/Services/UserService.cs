@@ -14,7 +14,7 @@ public class UserService : IUserService
         _repository = repository;
     }
 
-    public async Task<ApiResponse<List<UserDto>>> GetAllAsync(UserFilter filter)
+    public async Task<ApiPagedResponse<List<UserDto>>> GetAllAsync(UserFilter filter)
     {
         var (users, totalCount) = await _repository.GetAllAsync(filter);
 
@@ -41,7 +41,7 @@ public class UserService : IUserService
             };
         }
 
-        return ApiResponse<List<UserDto>>.Ok(data, "Success", pagination);
+        return ApiPagedResponse<List<UserDto>>.Ok(data, "Success", pagination);
     }
 
     public async Task<ApiResponse<UserDto>> GetByIdAsync(int id)

@@ -7,5 +7,5 @@ namespace KcfMonitoringSystem.Application.Services;
 
 public interface IProductionService
 {
-    Task<ApiResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter);
+    Task<ApiPagedResponse<List<ProductionDto>>> GetAllAsync(ProductionFilter filter);
 }

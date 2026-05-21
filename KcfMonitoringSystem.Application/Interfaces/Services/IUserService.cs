@@ -7,6 +7,6 @@ namespace KcfMonitoringSystem.Application.Services;
 
 public interface IUserService
 {
-    Task<ApiResponse<List<UserDto>>> GetAllAsync(UserFilter filter);
+    Task<ApiPagedResponse<List<UserDto>>> GetAllAsync(UserFilter filter);
     Task<ApiResponse<UserDto>> GetByIdAsync(int id);
 }

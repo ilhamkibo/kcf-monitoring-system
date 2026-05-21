@@ -14,7 +14,7 @@ public class ProductService : IProductService
         _repository = repository;
     }
 
-    public async Task<ApiResponse<List<ProductDto>>> GetAllAsync(ProductFilter filter)
+    public async Task<ApiPagedResponse<List<ProductDto>>> GetAllAsync(ProductFilter filter)
     {
         var (products, totalCount) = await _repository.GetAllAsync(filter);
 
@@ -38,7 +38,7 @@ public class ProductService : IProductService
             };
         }
 
-        return ApiResponse<List<ProductDto>>.Ok(data, "Success", pagination);
+        return ApiPagedResponse<List<ProductDto>>.Ok(data, "Success", pagination);
     }
 
     public async Task<ApiResponse<ProductDto>> GetByIdAsync(int id)
