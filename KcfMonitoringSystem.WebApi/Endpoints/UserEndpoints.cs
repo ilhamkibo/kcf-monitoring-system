@@ -28,5 +28,25 @@ public static class UserEndpoints
             return Results.Ok(response);
         }).Produces<ApiResponse<UserDto>>()
           .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/", async ([FromBody] CreateUserDto createUserDto, IUserService userService) =>
+        {
+            var response = await userService.CreateAsync(createUserDto);
+            if (!response.Status)
+                return Results.BadRequest(ApiErrorResponse.Create(response.Message));
+
+            return Results.Created($"/api/users/{response.Data.Id}", response);
+        }).Produces<ApiResponse<UserDto>>(StatusCodes.Status201Created)
+          .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest);
+
+        group.MapDelete("/{id}", async (int id, IUserService userService) =>
+        {
+            var response = await userService.DeleteAsync(id);
+            if (!response.Status)
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
+
+            return Results.Ok(response);
+        }).Produces<ApiResponse<object>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
     }
 }

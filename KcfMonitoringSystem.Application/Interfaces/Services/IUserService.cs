@@ -9,4 +9,6 @@ public interface IUserService
 {
     Task<ApiPagedResponse<List<UserDto>>> GetAllAsync(UserFilter filter);
     Task<ApiResponse<UserDto>> GetByIdAsync(int id);
+    Task<ApiResponse<UserDto>> CreateAsync(CreateUserDto createUserDto);
+    Task<ApiResponse<object>> DeleteAsync(int id);
 }

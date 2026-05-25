@@ -101,6 +101,12 @@ try
                     await context.Response.WriteAsJsonAsync(response);
                 }
             }
+            else if (exception is KcfMonitoringSystem.Application.Common.ValidationException validationEx)
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                var response = KcfMonitoringSystem.Application.Common.ApiErrorResponse.Create(validationEx.Message, validationEx.Errors);
+                await context.Response.WriteAsJsonAsync(response);
+            }
             else if (exception != null)
             {
                 Log.Error(exception, "An unhandled exception occurred in the API");

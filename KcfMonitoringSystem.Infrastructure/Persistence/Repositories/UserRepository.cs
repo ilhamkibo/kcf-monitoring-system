@@ -52,4 +52,31 @@ public class UserRepository : IUserRepository
             .Include(u => u.Machine)
             .FirstOrDefaultAsync(x => x.Id == id);
     }
+
+    public async Task AddAsync(User user)
+    {
+        await _db.Users.AddAsync(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(User user)
+    {
+        _db.Users.Remove(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<bool> GroupExistsAsync(int groupId)
+    {
+        return await _db.Groups.AnyAsync(g => g.Id == groupId);
+    }
+
+    public async Task<bool> MachineExistsAsync(int machineId)
+    {
+        return await _db.Machines.AnyAsync(m => m.Id == machineId);
+    }
+
+    public async Task<bool> UsernameExistsAsync(string username)
+    {
+        return await _db.Users.AnyAsync(u => u.Username != null && u.Username.ToLower() == username.ToLower());
+    }
 }
