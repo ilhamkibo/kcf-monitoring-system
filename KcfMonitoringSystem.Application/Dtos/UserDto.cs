@@ -23,3 +23,14 @@ public record CreateUserDto(
     int? GroupId,
     int? MachineId
 );
+
+public record UpdateUserDto(
+    [Required(ErrorMessage = "Name is required.")]
+    string Name,
+
+    string? Email,
+    string? Username,
+    string? Role,
+    int? GroupId,
+    int? MachineId
+);

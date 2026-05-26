@@ -9,6 +9,6 @@ public interface IMachineService
     Task<ApiPagedResponse<List<MachineDto>>> GetAllAsync(MachineFilter filter);
     Task<ApiResponse<MachineDto>> GetByIdAsync(int id);
     Task<ApiResponse<MachineDto>> CreateAsync(CreateMachineDto createMachineDto);
-    Task<ApiResponse<MachineDto>> UpdateAsync(UpdateMachineDto updateMachineDto);
+    Task<ApiResponse<MachineDto>> UpdateAsync(int id, UpdateMachineDto updateMachineDto);
     Task<ApiResponse<object>> DeleteAsync(int id);
 }

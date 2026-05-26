@@ -9,6 +9,6 @@ public interface IMachineRepository
     Task<(List<Machine> Data, int TotalCount)> GetAllAsync(MachineFilter filter);
     Task<Machine?> GetByIdAsync(int id);
     Task CreateAsync(Machine machine);
-    Task UpdateAsync(Machine machine);
+    Task UpdateAsync(int id, Machine machine);
     Task DeleteAsync(Machine machine);
 }

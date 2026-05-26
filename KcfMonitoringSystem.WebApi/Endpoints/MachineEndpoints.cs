@@ -41,16 +41,12 @@ public static class MachineEndpoints
 
         group.MapPut("/{id}", async (int id, [FromBody] UpdateMachineDto updateMachineDto, IMachineService machineService) =>
         {
-            if (id != updateMachineDto.Id)
-                return Results.BadRequest(ApiErrorResponse.Create("ID in path does not match ID in body."));
-
-            var response = await machineService.UpdateAsync(updateMachineDto);
+            var response = await machineService.UpdateAsync(id, updateMachineDto);
             if (!response.Status)
                 return Results.NotFound(ApiErrorResponse.Create(response.Message));
 
             return Results.Ok(response);
         }).Produces<ApiResponse<MachineDto>>()
-          .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
           .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id}", async (int id, IMachineService machineService) =>

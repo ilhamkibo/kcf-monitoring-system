@@ -86,9 +86,9 @@ public class MachineService : IMachineService
         return ApiResponse<MachineDto>.Ok(dto, "Machine created successfully");
     }
 
-    public async Task<ApiResponse<MachineDto>> UpdateAsync(UpdateMachineDto updateMachineDto)
+    public async Task<ApiResponse<MachineDto>> UpdateAsync(int id, UpdateMachineDto updateMachineDto)
     {
-        var machine = await _machineRepository.GetByIdAsync(updateMachineDto.Id);
+        var machine = await _machineRepository.GetByIdAsync(id);
         if (machine == null)
             return ApiResponse<MachineDto>.Error("Machine not found");
 
@@ -107,7 +107,7 @@ public class MachineService : IMachineService
         machine.Name = updateMachineDto.Name.Trim();
         machine.UpdatedAt = DateTime.UtcNow;
 
-        await _machineRepository.UpdateAsync(machine);
+        await _machineRepository.UpdateAsync(id, machine);
 
         var dto = new MachineDto(
             machine.Id,

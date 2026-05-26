@@ -141,6 +141,83 @@ public class UserService : IUserService
         return ApiResponse<UserDto>.Ok(dto, "User created successfully");
     }
 
+    public async Task<ApiResponse<UserDto>> UpdateAsync(int id, UpdateUserDto updateUserDto)
+    {
+        var user = await _repository.GetByIdAsync(id);
+        if (user == null)
+        {
+            return ApiResponse<UserDto>.Error("User not found");
+        }
+
+        var errors = new Dictionary<string, string[]>();
+
+        if (string.IsNullOrWhiteSpace(updateUserDto.Name))
+        {
+            errors.Add("Name", new[] { "Name is required." });
+        }
+
+        if (!string.IsNullOrWhiteSpace(updateUserDto.Username))
+        {
+            var existingUserWithUsername = await _repository.UsernameExistsAsync(updateUserDto.Username);
+            if (existingUserWithUsername && user.Username?.ToLower() != updateUserDto.Username.ToLower())
+            {
+                errors.Add("Username", new[] { "Username already exists." });
+            }
+        }
+
+        if (updateUserDto.GroupId.HasValue)
+        {
+            var groupExists = await _repository.GroupExistsAsync(updateUserDto.GroupId.Value);
+            if (!groupExists)
+            {
+                errors.Add("GroupId", new[] { "Group not found." });
+            }
+        }
+
+        if (updateUserDto.MachineId.HasValue)
+        {
+            var machineExists = await _repository.MachineExistsAsync(updateUserDto.MachineId.Value);
+            if (!machineExists)
+            {
+                errors.Add("MachineId", new[] { "Machine not found." });
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(errors);
+        }
+
+        user.Name = updateUserDto.Name.Trim();
+        user.Email = updateUserDto.Email?.Trim();
+        user.Username = updateUserDto.Username?.Trim();
+        user.Role = updateUserDto.Role?.Trim();
+        user.GroupId = updateUserDto.GroupId;
+        user.MachineId = updateUserDto.MachineId;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(user);
+
+        var updatedUser = await _repository.GetByIdAsync(user.Id);
+        if (updatedUser == null)
+        {
+            return ApiResponse<UserDto>.Error("Failed to retrieve updated user");
+        }
+
+        var dto = new UserDto(
+            updatedUser.Id,
+            updatedUser.Name,
+            updatedUser.Email,
+            updatedUser.Username,
+            updatedUser.Role,
+            updatedUser.Group?.Name,
+            updatedUser.Machine?.Name,
+            updatedUser.CreatedAt.ToLocalTime()
+        );
+
+        return ApiResponse<UserDto>.Ok(dto, "User updated successfully");
+    }
+
     public async Task<ApiResponse<object>> DeleteAsync(int id)
     {
         var user = await _repository.GetByIdAsync(id);

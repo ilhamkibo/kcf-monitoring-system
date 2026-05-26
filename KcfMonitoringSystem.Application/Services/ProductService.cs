@@ -2,6 +2,7 @@ using KcfMonitoringSystem.Application.Common;
 using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Interfaces.Repositories;
+using KcfMonitoringSystem.Domain.Entities;
 
 namespace KcfMonitoringSystem.Application.Services;
 
@@ -75,5 +76,69 @@ public class ProductService : IProductService
         );
 
         return ApiResponse<ProductDto>.Ok(data);
+    }
+
+    public async Task<ApiResponse<ProductDto>> CreateAsync(CreateProductDto dto)
+    {
+        var existingProduct = await _repository.GetByProductNoAsync(dto.ProductNo);
+        if (existingProduct != null)
+            return ApiResponse<ProductDto>.Error("Product with this ProductNo already exists");
+
+        var product = new Product
+        {
+            ProductNo = dto.ProductNo,
+            PartName = dto.PartName,
+            PartNo = dto.PartNo
+        };
+
+        var createdProduct = await _repository.AddAsync(product);
+
+        var data = new ProductDto(
+            createdProduct.Id,
+            createdProduct.ProductNo,
+            createdProduct.PartName,
+            createdProduct.PartNo,
+            createdProduct.CreatedAt.ToLocalTime()
+        );
+
+        return ApiResponse<ProductDto>.Ok(data, "Product created successfully");
+    }
+
+    public async Task<ApiResponse<ProductDto>> UpdateAsync(int id, UpdateProductDto dto)
+    {
+        var product = await _repository.GetByIdAsync(id);
+        if (product == null)
+            return ApiResponse<ProductDto>.Error("Product not found");
+
+        var existingProduct = await _repository.GetByProductNoAsync(dto.ProductNo);
+        if (existingProduct != null && existingProduct.Id != id)
+            return ApiResponse<ProductDto>.Error("Another product with this ProductNo already exists");
+
+        product.ProductNo = dto.ProductNo;
+        product.PartName = dto.PartName;
+        product.PartNo = dto.PartNo;
+
+        var updatedProduct = await _repository.UpdateAsync(product);
+
+        var data = new ProductDto(
+            updatedProduct.Id,
+            updatedProduct.ProductNo,
+            updatedProduct.PartName,
+            updatedProduct.PartNo,
+            updatedProduct.CreatedAt.ToLocalTime()
+        );
+
+        return ApiResponse<ProductDto>.Ok(data, "Product updated successfully");
+    }
+
+    public async Task<ApiResponse<bool>> DeleteAsync(int id)
+    {
+        var product = await _repository.GetByIdAsync(id);
+        if (product == null)
+            return ApiResponse<bool>.Error("Product not found");
+
+        await _repository.DeleteAsync(product);
+
+        return ApiResponse<bool>.Ok(true, "Product deleted successfully");
     }
 }

@@ -50,4 +50,27 @@ public class ProductRepository : IProductRepository
     {
         return await _db.Products.FirstOrDefaultAsync(x => x.ProductNo == productNo);
     }
+
+    public async Task<Product> AddAsync(Product product)
+    {
+        product.CreatedAt = DateTime.UtcNow;
+        product.UpdatedAt = DateTime.UtcNow;
+        _db.Products.Add(product);
+        await _db.SaveChangesAsync();
+        return product;
+    }
+
+    public async Task<Product> UpdateAsync(Product product)
+    {
+        product.UpdatedAt = DateTime.UtcNow;
+        _db.Products.Update(product);
+        await _db.SaveChangesAsync();
+        return product;
+    }
+
+    public async Task DeleteAsync(Product product)
+    {
+        _db.Products.Remove(product);
+        await _db.SaveChangesAsync();
+    }
 }

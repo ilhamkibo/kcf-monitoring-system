@@ -11,6 +11,5 @@ public record CreateMachineDto(
 );
 
 public record UpdateMachineDto(
-    int Id,
     string Name
 );

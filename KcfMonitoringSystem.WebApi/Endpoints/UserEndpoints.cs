@@ -39,6 +39,16 @@ public static class UserEndpoints
         }).Produces<ApiResponse<UserDto>>(StatusCodes.Status201Created)
           .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest);
 
+        group.MapPut("/{id}", async (int id, [FromBody] UpdateUserDto updateUserDto, IUserService userService) =>
+        {
+            var response = await userService.UpdateAsync(id, updateUserDto);
+            if (!response.Status)
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
+
+            return Results.Ok(response);
+        }).Produces<ApiResponse<UserDto>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         group.MapDelete("/{id}", async (int id, IUserService userService) =>
         {
             var response = await userService.DeleteAsync(id);

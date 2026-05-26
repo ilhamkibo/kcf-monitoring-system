@@ -49,9 +49,15 @@ public class MachineRepository : IMachineRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(Machine machine)
+    public async Task UpdateAsync(int id, Machine machine)
     {
-        _db.Machines.Update(machine);
+        var existingMachine = await _db.Machines.FirstOrDefaultAsync(x => x.Id == id);
+        if (existingMachine == null)
+            return;
+
+        existingMachine.Name = machine.Name.Trim();
+        existingMachine.UpdatedAt = DateTime.UtcNow;
+
         await _db.SaveChangesAsync();
     }
 

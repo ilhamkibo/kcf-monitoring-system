@@ -38,5 +38,35 @@ public static class ProductEndpoints
             return Results.Ok(response);
         }).Produces<ApiResponse<ProductDto>>()
           .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/", async (CreateProductDto dto, IProductService productService) =>
+        {
+            var response = await productService.CreateAsync(dto);
+            if (!response.Status)
+                return Results.BadRequest(ApiErrorResponse.Create(response.Message));
+
+            return Results.Created($"/api/products/{response.Data?.Id}", response);
+        }).Produces<ApiResponse<ProductDto>>(StatusCodes.Status201Created)
+          .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest);
+
+        group.MapPut("/{id}", async (int id, UpdateProductDto dto, IProductService productService) =>
+        {
+            var response = await productService.UpdateAsync(id, dto);
+            if (!response.Status)
+                return Results.BadRequest(ApiErrorResponse.Create(response.Message));
+
+            return Results.Ok(response);
+        }).Produces<ApiResponse<ProductDto>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest);
+
+        group.MapDelete("/{id}", async (int id, IProductService productService) =>
+        {
+            var response = await productService.DeleteAsync(id);
+            if (!response.Status)
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
+
+            return Results.Ok(response);
+        }).Produces<ApiResponse<bool>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
     }
 }
