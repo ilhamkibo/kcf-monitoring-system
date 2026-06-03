@@ -60,15 +60,25 @@ public class StatusService : IStatusService
 
         var data = statuses
             .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
-            .Select(g => new StatusTimelineDto(
-                g.Key.MachineId,
-                g.Key.MachineName,
-                g.Select(s => new TimelineDto(
+            .Select(g => {
+                var timeline = g.Select(s => new TimelineDto(
                     s.CreatedAt.ToLocalTime(),
                     s.UpdatedAt?.ToLocalTime(),
                     s.Code
-                )).ToList()
-            ))
+                )).ToList();
+
+                if (timeline.Count > 0)
+                {
+                    var last = timeline[^1];
+                    timeline[^1] = new TimelineDto(last.Start, null, last.Status);
+                }
+
+                return new StatusTimelineDto(
+                    g.Key.MachineId,
+                    g.Key.MachineName,
+                    timeline
+                );
+            })
             .ToList();
 
         return ApiResponse<List<StatusTimelineDto>>.Ok(data, "Success");
