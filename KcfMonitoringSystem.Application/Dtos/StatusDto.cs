@@ -30,5 +30,6 @@ public record ActivityDto(
 public record ActivityDetailDto(
     string Operator,
     string Product,
-    int TotalTime
+    int TotalTime,
+    int Code
 );

@@ -60,7 +60,8 @@ public class StatusService : IStatusService
 
         var data = statuses
             .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
-            .Select(g => {
+            .Select(g =>
+            {
                 var timeline = g.Select(s => new TimelineDto(
                     s.CreatedAt.ToLocalTime(),
                     s.UpdatedAt?.ToLocalTime(),
@@ -96,11 +97,12 @@ public class StatusService : IStatusService
             .GroupBy(s => s.CreatedAt.ToLocalTime().Date)
             .Select(g => new ActivityDto(
                 g.Key,
-                g.GroupBy(s => new { OperatorName = s.User.Name, ProductName = s.Product.ProductNo })
+                g.GroupBy(s => new { OperatorName = s.User.Name, ProductName = s.Product.ProductNo, s.Code })
                  .Select(sd => new ActivityDetailDto(
                      sd.Key.OperatorName,
                      sd.Key.ProductName,
-                     sd.Sum(s => s.Duration)
+                     sd.Sum(s => s.Duration),
+                     sd.Key.Code
                  ))
                  .OrderBy(x => x.Operator)
                  .ToList()

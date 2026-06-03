@@ -75,7 +75,7 @@ public class StatusEndpointsTests : IClassFixture<EndpointTestsBase>
         // Arrange
         var activity = new List<ActivityDto> 
         { 
-            new(DateTime.Today, new List<ActivityDetailDto> { new("User 1", "Product 1", 3600) }) 
+            new(DateTime.Today, new List<ActivityDetailDto> { new("User 1", "Product 1", 3600, 1) }) 
         };
         var response = ApiResponse<List<ActivityDto>>.Ok(activity);
         
