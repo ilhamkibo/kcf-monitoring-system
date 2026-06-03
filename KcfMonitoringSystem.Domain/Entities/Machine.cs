@@ -13,4 +13,5 @@ public class Machine
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Production> Productions { get; set; } = new List<Production>();
     public ICollection<Status> Statuses { get; set; } = new List<Status>();
+    public ICollection<AlarmHistory> AlarmHistories { get; set; } = new List<AlarmHistory>();
 }

@@ -114,6 +114,11 @@ public class MqttWorker : BackgroundService
         {
             subscribeOptions.WithTopicFilter(topic, MqttQualityOfServiceLevel.AtLeastOnce);
             _logger.LogInformation("Subscribed to topic: {Topic}", topic);
+
+            // Subscribe to alarm topic for this machine
+            var alarmTopic = $"{topic}/alarm";
+            subscribeOptions.WithTopicFilter(alarmTopic, MqttQualityOfServiceLevel.AtLeastOnce);
+            _logger.LogInformation("Subscribed to alarm topic: {Topic}", alarmTopic);
         }
 
         await _mqttClient.SubscribeAsync(subscribeOptions.Build(), stoppingToken);
@@ -128,15 +133,28 @@ public class MqttWorker : BackgroundService
 
         try
         {
-            var message = JsonSerializer.Deserialize<MqttMachineMessage>(payload);
-
-            if (message == null || message.Machine == null)
+            if (topic.EndsWith("/alarm", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Invalid message on [{Topic}]: missing Machine data.", topic);
-                return;
+                var alarmMessage = JsonSerializer.Deserialize<MqttAlarmMessage>(payload);
+                if (alarmMessage == null)
+                {
+                    _logger.LogWarning("Invalid alarm message on [{Topic}]", topic);
+                    return;
+                }
+                await ProcessAlarmDataAsync(topic, alarmMessage);
             }
+            else
+            {
+                var message = JsonSerializer.Deserialize<MqttMachineMessage>(payload);
 
-            await ProcessMachineDataAsync(topic, message);
+                if (message == null || message.Machine == null)
+                {
+                    _logger.LogWarning("Invalid message on [{Topic}]: missing Machine data.", topic);
+                    return;
+                }
+
+                await ProcessMachineDataAsync(topic, message);
+            }
         }
         catch (JsonException ex)
         {
@@ -146,6 +164,67 @@ public class MqttWorker : BackgroundService
         {
             _logger.LogError(ex, "Error processing message on [{Topic}]", topic);
         }
+    }
+
+    private async Task ProcessAlarmDataAsync(string topic, MqttAlarmMessage message)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Find the machine by extracting machine ID from topic
+        int topicId = GetMachineIdFromTopic(topic);
+        var machine = await db.Machines.FindAsync(topicId);
+        if (machine == null)
+        {
+            _logger.LogWarning("Skipping alarm message on [{Topic}]: Machine with ID {MachineId} not found in database.", topic, topicId);
+            return;
+        }
+
+        bool isRecovered = string.Equals(message.Status, "recovered", StringComparison.OrdinalIgnoreCase);
+
+        if (isRecovered)
+        {
+            // Try to find the corresponding active triggered alarm to update it
+            var existingAlarm = await db.AlarmHistories
+                .Where(a => a.MachineId == machine.Id && 
+                            a.TriggerTime == message.TriggerTime && 
+                            a.Message == message.Message && 
+                            a.Status == "triggered")
+                .OrderByDescending(a => a.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (existingAlarm != null)
+            {
+                existingAlarm.Status = "recovered";
+                existingAlarm.RecoverTime = message.RecoverTime ?? message.Ts;
+                existingAlarm.Timestamp = message.Ts;
+                existingAlarm.UpdatedAt = DateTime.UtcNow;
+
+                db.AlarmHistories.Update(existingAlarm);
+                await db.SaveChangesAsync();
+
+                _logger.LogInformation("Updated alarm history to recovered for Machine '{MachineName}' on [{Topic}]: {Message}", machine.Name, topic, message.Message);
+                return;
+            }
+        }
+
+        // If it's a trigger, or we couldn't find the triggered alarm, create a new record
+        var alarmHistory = new KcfMonitoringSystem.Domain.Entities.AlarmHistory
+        {
+            MachineId = machine.Id,
+            Status = message.Status.Trim(),
+            TriggerTime = message.TriggerTime,
+            RecoverTime = message.RecoverTime,
+            Message = message.Message.Trim(),
+            Timestamp = message.Ts,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        db.AlarmHistories.Add(alarmHistory);
+        await db.SaveChangesAsync();
+
+        _logger.LogInformation("Saved new alarm history for Machine '{MachineName}' on [{Topic}]: {Status} - {Message}", machine.Name, topic, message.Status, message.Message);
     }
 
     private async Task ProcessMachineDataAsync(string topic, MqttMachineMessage message)

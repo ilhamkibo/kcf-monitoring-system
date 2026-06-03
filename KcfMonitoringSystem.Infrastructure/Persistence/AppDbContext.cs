@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Production> Productions => Set<Production>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Status> Statuses => Set<Status>();
+    public DbSet<AlarmHistory> AlarmHistories => Set<AlarmHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,5 +86,12 @@ public class AppDbContext : DbContext
             .WithMany(p => p.Statuses)
             .HasForeignKey(p => p.ProductId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // AlarmHistory → Machine (Many-to-One)
+        modelBuilder.Entity<AlarmHistory>()
+            .HasOne(a => a.Machine)
+            .WithMany(m => m.AlarmHistories)
+            .HasForeignKey(a => a.MachineId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
