@@ -57,6 +57,8 @@ try
     builder.Services.AddScoped<IStatusService, StatusService>();
     builder.Services.AddScoped<IMachineRepository, MachineRepository>();
     builder.Services.AddScoped<IMachineService, MachineService>();
+    builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+    builder.Services.AddScoped<IGroupService, GroupService>();
 
     var app = builder.Build();
 
@@ -145,6 +147,7 @@ try
     app.MapProductEndpoints();
     app.MapStatusEndpoints();
     app.MapMachineEndpoints();
+    app.MapGroupEndpoints();
 
     app.Run();
 }
