@@ -59,6 +59,8 @@ try
     builder.Services.AddScoped<IMachineService, MachineService>();
     builder.Services.AddScoped<IGroupRepository, GroupRepository>();
     builder.Services.AddScoped<IGroupService, GroupService>();
+    builder.Services.AddScoped<IAlarmHistoryRepository, AlarmHistoryRepository>();
+    builder.Services.AddScoped<IAlarmHistoryService, AlarmHistoryService>();
 
     var app = builder.Build();
 
@@ -148,6 +150,7 @@ try
     app.MapStatusEndpoints();
     app.MapMachineEndpoints();
     app.MapGroupEndpoints();
+    app.MapAlarmHistoryEndpoints();
 
     app.Run();
 }

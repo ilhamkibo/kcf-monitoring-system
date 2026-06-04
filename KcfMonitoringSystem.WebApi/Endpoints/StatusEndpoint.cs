@@ -45,6 +45,35 @@ public static class StatusEndpoints
             return Results.Ok(response);
         }).Produces<ApiResponse<List<StatusTimelineDto>>>();
 
+        group.MapGet("/timeline/{machineId:int}", async (int machineId, IStatusService statusService, IMachineService machineService, [FromQuery] string? search = null, [FromQuery] int? code = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null, [FromQuery] int? userId = null, [FromQuery] int? productId = null) =>
+        {
+            var filter = new StatusFilter
+            {
+                Search = search,
+                MachineId = machineId,
+                Code = code,
+                StartDate = startDate,
+                EndDate = endDate,
+                UserId = userId,
+                ProductId = productId
+            };
+            var response = await statusService.GetTimelineAsync(filter);
+            
+            if (response.Status && response.Data.Count > 0)
+            {
+                return Results.Ok(ApiResponse<StatusTimelineDto>.Ok(response.Data[0]));
+            }
+
+            var machineResponse = await machineService.GetByIdAsync(machineId);
+            if (!machineResponse.Status)
+            {
+                return Results.NotFound(ApiResponse<StatusTimelineDto>.Error("Machine not found"));
+            }
+
+            var emptyTimeline = new StatusTimelineDto(machineResponse.Data.Id, machineResponse.Data.Name, new List<TimelineDto>());
+            return Results.Ok(ApiResponse<StatusTimelineDto>.Ok(emptyTimeline));
+        }).Produces<ApiResponse<StatusTimelineDto>>();
+
         group.MapGet("/activity", async (IStatusService statusService, [FromQuery] string? search = null, [FromQuery] int? machineId = null, [FromQuery] int? code = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null, [FromQuery] int? userId = null, [FromQuery] int? productId = null) =>
         {
             var filter = new StatusFilter
