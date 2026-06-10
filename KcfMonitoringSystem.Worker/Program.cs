@@ -27,7 +27,7 @@ try
 
     // Register AppDbContext
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection") ?? ""));
 
     // Register MqttWorker as a hosted service
     builder.Services.AddHostedService<MqttWorker>();

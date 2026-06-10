@@ -41,14 +41,14 @@ public class AppDbContext : DbContext
             .HasOne(p => p.Machine)
             .WithMany(m => m.Productions)
             .HasForeignKey(p => p.MachineId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Production → User (Many-to-One)
         modelBuilder.Entity<Production>()
             .HasOne(p => p.User)
             .WithMany(u => u.Productions)
             .HasForeignKey(p => p.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Production → Product (Many-to-One)
         modelBuilder.Entity<Production>()
@@ -78,14 +78,14 @@ public class AppDbContext : DbContext
             .HasOne(p => p.User)
             .WithMany(u => u.Statuses)
             .HasForeignKey(p => p.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Status → Product (Many-to-One)
         modelBuilder.Entity<Status>()
             .HasOne(p => p.Product)
             .WithMany(p => p.Statuses)
             .HasForeignKey(p => p.ProductId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         // AlarmHistory → Machine (Many-to-One)
         modelBuilder.Entity<AlarmHistory>()

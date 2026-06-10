@@ -127,7 +127,19 @@ public class MqttWorker : BackgroundService
     private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
     {
         var topic = args.ApplicationMessage.Topic;
-        var payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+        var rawPayload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+
+        // Sanitize payload: strip out invalid control characters (except tab, lf, cr)
+        var cleanPayloadBuilder = new StringBuilder(rawPayload.Length);
+        foreach (var c in rawPayload)
+        {
+            if (char.IsControl(c) && c != '\t' && c != '\n' && c != '\r')
+            {
+                continue;
+            }
+            cleanPayloadBuilder.Append(c);
+        }
+        var payload = cleanPayloadBuilder.ToString();
 
         _logger.LogDebug("Message received on [{Topic}]: {Payload}", topic, payload);
 
@@ -293,17 +305,82 @@ public class MqttWorker : BackgroundService
 
     private async Task<int> GetUserIdAsync(AppDbContext db, string operatorName)
     {
+        if (string.IsNullOrWhiteSpace(operatorName))
+        {
+            operatorName = "testing";
+        }
+
         var user = await db.Users.FirstOrDefaultAsync(u => u.Name.ToLower() == operatorName.ToLower());
-        return user?.Id ?? 1;
+        if (user != null)
+        {
+            return user.Id;
+        }
+
+        // If the specified user wasn't found, try to look up the default "testing" user
+        if (operatorName.ToLower() != "testing")
+        {
+            var testingUser = await db.Users.FirstOrDefaultAsync(u => u.Name.ToLower() == "testing");
+            if (testingUser != null)
+            {
+                return testingUser.Id;
+            }
+        }
+
+        // Create the "testing" user if it doesn't exist
+        var newTestingUser = new KcfMonitoringSystem.Domain.Entities.User
+        {
+            Name = "testing",
+            Role = "Operator",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(newTestingUser);
+        await db.SaveChangesAsync(); // save immediately to get Id
+        return newTestingUser.Id;
     }
 
     private async Task<int> GetProductIdAsync(AppDbContext db, string productName)
     {
+        if (string.IsNullOrWhiteSpace(productName))
+        {
+            productName = "testing";
+        }
+
         var product = await db.Products.FirstOrDefaultAsync(p =>
             p.PartName.ToLower() == productName.ToLower() ||
             p.ProductNo.ToLower() == productName.ToLower() ||
             p.PartNo.ToLower() == productName.ToLower());
-        return product?.Id ?? 1;
+
+        if (product != null)
+        {
+            return product.Id;
+        }
+
+        // If the specified product wasn't found, try to look up the default "testing" product
+        if (productName.ToLower() != "testing")
+        {
+            var testingProduct = await db.Products.FirstOrDefaultAsync(p =>
+                p.PartName.ToLower() == "testing" ||
+                p.ProductNo.ToLower() == "testing" ||
+                p.PartNo.ToLower() == "testing");
+            if (testingProduct != null)
+            {
+                return testingProduct.Id;
+            }
+        }
+
+        // Create the "testing" product if it doesn't exist
+        var newTestingProduct = new KcfMonitoringSystem.Domain.Entities.Product
+        {
+            ProductNo = "testing",
+            PartName = "testing",
+            PartNo = "testing",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        db.Products.Add(newTestingProduct);
+        await db.SaveChangesAsync(); // save immediately to get Id
+        return newTestingProduct.Id;
     }
 
     private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int statusCode, DateTime timestamp, int userId, int productId)
@@ -312,7 +389,7 @@ public class MqttWorker : BackgroundService
 
         var lastStatus = await db.Statuses
             .Where(s => s.MachineId == machineId)
-            .OrderByDescending(s => s.CreatedAt)
+            .OrderByDescending(s => s.Id)
             .FirstOrDefaultAsync();
 
         // Check if the gap since the last update is too large (e.g. worker was offline or machine was powered off)
@@ -351,7 +428,7 @@ public class MqttWorker : BackgroundService
     {
         var lastProduction = await db.Productions
             .Where(p => p.MachineId == machineId)
-            .OrderByDescending(p => p.CreatedAt)
+            .OrderByDescending(p => p.Id)
             .FirstOrDefaultAsync();
 
         if (lastProduction != null && lastProduction.UserId == userId && lastProduction.ProductId == productId)
