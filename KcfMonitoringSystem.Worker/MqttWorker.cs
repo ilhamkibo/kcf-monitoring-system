@@ -115,8 +115,20 @@ public class MqttWorker : BackgroundService
             subscribeOptions.WithTopicFilter(topic, MqttQualityOfServiceLevel.AtLeastOnce);
             _logger.LogInformation("Subscribed to topic: {Topic}", topic);
 
-            // Subscribe to alarm topic for this machine
-            var alarmTopic = $"{topic}/alarm";
+            // Subscribe to alarm topic for this machine (e.g. ALARM1 for MACHINE1, or kcf/alarm/1 for kcf/machine/1)
+            string alarmTopic;
+            if (topic.Contains("machine", StringComparison.OrdinalIgnoreCase))
+            {
+                alarmTopic = topic.Replace("machine", "alarm", StringComparison.OrdinalIgnoreCase);
+            }
+            else if (topic.Contains("MACHINE", StringComparison.Ordinal))
+            {
+                alarmTopic = topic.Replace("MACHINE", "ALARM");
+            }
+            else
+            {
+                alarmTopic = $"{topic}/alarm";
+            }
             subscribeOptions.WithTopicFilter(alarmTopic, MqttQualityOfServiceLevel.AtLeastOnce);
             _logger.LogInformation("Subscribed to alarm topic: {Topic}", alarmTopic);
         }
@@ -145,7 +157,7 @@ public class MqttWorker : BackgroundService
 
         try
         {
-            if (topic.EndsWith("/alarm", StringComparison.OrdinalIgnoreCase))
+            if (topic.Contains("alarm", StringComparison.OrdinalIgnoreCase))
             {
                 var alarmMessage = JsonSerializer.Deserialize<MqttAlarmMessage>(payload);
                 if (alarmMessage == null)
