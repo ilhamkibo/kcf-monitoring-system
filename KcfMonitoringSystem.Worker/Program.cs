@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 // Setup Serilog
+var logPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Logs", "worker-.log");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
-    .WriteTo.File("Logs/worker-.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 try

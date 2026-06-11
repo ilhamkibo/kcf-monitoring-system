@@ -12,13 +12,14 @@ using KcfMonitoringSystem.Application.Interfaces.Services;
 using KcfMonitoringSystem.Domain.Entities;
 
 // Setup Serilog
+var logPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Logs", "webapi-.log");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", Serilog.Events.LogEventLevel.Fatal)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
-    .WriteTo.File("Logs/webapi-.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 try

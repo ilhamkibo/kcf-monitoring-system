@@ -326,7 +326,17 @@ public class MqttWorker : BackgroundService
             operatorName = "testing";
         }
 
+        // 1. Exact match (case-insensitive)
         var user = await db.Users.FirstOrDefaultAsync(u => u.Name.ToLower() == operatorName.ToLower());
+        if (user != null)
+        {
+            return user.Id;
+        }
+
+        // 2. Partial match (DB name contains MQTT name OR MQTT name contains DB name)
+        user = await db.Users.FirstOrDefaultAsync(u => 
+            u.Name.ToLower().Contains(operatorName.ToLower()) || 
+            operatorName.ToLower().Contains(u.Name.ToLower()));
         if (user != null)
         {
             return user.Id;
