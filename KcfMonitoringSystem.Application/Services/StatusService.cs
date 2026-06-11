@@ -29,8 +29,8 @@ public class StatusService : IStatusService
                 x.MachineId,
                 x.Machine.Name,
                 x.Code,
-                x.CreatedAt.ToLocalTime(),
-                x.UpdatedAt?.ToLocalTime(),
+                x.CreatedAt,
+                x.UpdatedAt,
                 x.Duration
             )
         ).ToList();
@@ -63,8 +63,8 @@ public class StatusService : IStatusService
             .Select(g =>
             {
                 var timeline = g.Select(s => new TimelineDto(
-                    s.CreatedAt.ToLocalTime(),
-                    s.UpdatedAt?.ToLocalTime(),
+                    s.CreatedAt,
+                    s.UpdatedAt,
                     s.Code
                 )).ToList();
 
@@ -94,7 +94,7 @@ public class StatusService : IStatusService
         var statuses = await _repository.GetActivityStatusesAsync(filter);
 
         var data = statuses
-            .GroupBy(s => s.CreatedAt.ToLocalTime().Date)
+            .GroupBy(s => s.CreatedAt.Date)
             .Select(g => new ActivityDto(
                 g.Key,
                 g.GroupBy(s => new { OperatorName = s.User.Name, ProductName = s.Product.ProductNo, s.Code })

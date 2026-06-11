@@ -28,12 +28,12 @@ public class AlarmHistoryService : IAlarmHistoryService
             x.MachineId,
             x.Machine.Name,
             x.Status,
-            x.TriggerTime.ToLocalTime(),
-            x.RecoverTime?.ToLocalTime(),
+            x.TriggerTime,
+            x.RecoverTime,
             x.Message,
-            x.Timestamp.ToLocalTime(),
-            x.CreatedAt.ToLocalTime(),
-            x.UpdatedAt.ToLocalTime()
+            x.Timestamp,
+            x.CreatedAt,
+            x.UpdatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;

@@ -22,7 +22,7 @@ public class MachineService : IMachineService
         var data = machines.Select(x => new MachineDto(
             x.Id,
             x.Name,
-            x.CreatedAt.ToLocalTime()
+            x.CreatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;
@@ -49,7 +49,7 @@ public class MachineService : IMachineService
         var data = new MachineDto(
             machine.Id,
             machine.Name,
-            machine.CreatedAt.ToLocalTime()
+            machine.CreatedAt
         );
         return ApiResponse<MachineDto>.Ok(data);
     }
@@ -80,7 +80,7 @@ public class MachineService : IMachineService
         var dto = new MachineDto(
             machine.Id,
             machine.Name,
-            machine.CreatedAt.ToLocalTime()
+            machine.CreatedAt
         );
 
         return ApiResponse<MachineDto>.Ok(dto, "Machine created successfully");
@@ -112,7 +112,7 @@ public class MachineService : IMachineService
         var dto = new MachineDto(
             machine.Id,
             machine.Name,
-            machine.CreatedAt.ToLocalTime()
+            machine.CreatedAt
         );
 
         return ApiResponse<MachineDto>.Ok(dto, "Machine updated successfully");

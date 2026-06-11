@@ -24,7 +24,7 @@ public class ProductService : IProductService
             x.ProductNo,
             x.PartName,
             x.PartNo,
-            x.CreatedAt.ToLocalTime()
+            x.CreatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;
@@ -54,7 +54,7 @@ public class ProductService : IProductService
             product.ProductNo,
             product.PartName,
             product.PartNo,
-            product.CreatedAt.ToLocalTime()
+            product.CreatedAt
         );
 
         return ApiResponse<ProductDto>.Ok(data);
@@ -72,7 +72,7 @@ public class ProductService : IProductService
             product.ProductNo,
             product.PartName,
             product.PartNo,
-            product.CreatedAt.ToLocalTime()
+            product.CreatedAt
         );
 
         return ApiResponse<ProductDto>.Ok(data);
@@ -98,7 +98,7 @@ public class ProductService : IProductService
             createdProduct.ProductNo,
             createdProduct.PartName,
             createdProduct.PartNo,
-            createdProduct.CreatedAt.ToLocalTime()
+            createdProduct.CreatedAt
         );
 
         return ApiResponse<ProductDto>.Ok(data, "Product created successfully");
@@ -125,7 +125,7 @@ public class ProductService : IProductService
             updatedProduct.ProductNo,
             updatedProduct.PartName,
             updatedProduct.PartNo,
-            updatedProduct.CreatedAt.ToLocalTime()
+            updatedProduct.CreatedAt
         );
 
         return ApiResponse<ProductDto>.Ok(data, "Product updated successfully");

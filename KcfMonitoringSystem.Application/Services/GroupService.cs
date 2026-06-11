@@ -22,7 +22,7 @@ public class GroupService : IGroupService
         var data = groups.Select(x => new GroupDto(
             x.Id,
             x.Name,
-            x.CreatedAt.ToLocalTime()
+            x.CreatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;
@@ -49,7 +49,7 @@ public class GroupService : IGroupService
         var data = new GroupDto(
             group.Id,
             group.Name,
-            group.CreatedAt.ToLocalTime()
+            group.CreatedAt
         );
         return ApiResponse<GroupDto>.Ok(data);
     }
@@ -80,7 +80,7 @@ public class GroupService : IGroupService
         var dto = new GroupDto(
             group.Id,
             group.Name,
-            group.CreatedAt.ToLocalTime()
+            group.CreatedAt
         );
 
         return ApiResponse<GroupDto>.Ok(dto, "Group created successfully");
@@ -112,7 +112,7 @@ public class GroupService : IGroupService
         var dto = new GroupDto(
             group.Id,
             group.Name,
-            group.CreatedAt.ToLocalTime()
+            group.CreatedAt
         );
 
         return ApiResponse<GroupDto>.Ok(dto, "Group updated successfully");

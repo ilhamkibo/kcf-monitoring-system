@@ -27,7 +27,7 @@ public class UserService : IUserService
             x.Role,
             x.Group?.Name,
             x.Machine?.Name,
-            x.CreatedAt.ToLocalTime()
+            x.CreatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;
@@ -60,7 +60,7 @@ public class UserService : IUserService
             user.Role,
             user.Group?.Name,
             user.Machine?.Name,
-            user.CreatedAt.ToLocalTime()
+            user.CreatedAt
         );
 
         return ApiResponse<UserDto>.Ok(data);
@@ -135,7 +135,7 @@ public class UserService : IUserService
             createdUser.Role,
             createdUser.Group?.Name,
             createdUser.Machine?.Name,
-            createdUser.CreatedAt.ToLocalTime()
+            createdUser.CreatedAt
         );
 
         return ApiResponse<UserDto>.Ok(dto, "User created successfully");
@@ -212,7 +212,7 @@ public class UserService : IUserService
             updatedUser.Role,
             updatedUser.Group?.Name,
             updatedUser.Machine?.Name,
-            updatedUser.CreatedAt.ToLocalTime()
+            updatedUser.CreatedAt
         );
 
         return ApiResponse<UserDto>.Ok(dto, "User updated successfully");

@@ -32,7 +32,7 @@ public class ProductionService : IProductionService
             x.Product?.ProductNo,
             x.Product?.PartName,
             x.Quantity,
-            x.CreatedAt.ToLocalTime()
+            x.CreatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;
