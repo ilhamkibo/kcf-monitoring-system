@@ -16,7 +16,14 @@ try
 {
     Log.Information("Starting KCF Monitoring Worker...");
 
-    var builder = Host.CreateApplicationBuilder(args);
+    var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+    {
+        Args = args,
+        ContentRootPath = AppContext.BaseDirectory
+    });
+
+    // Enable Windows Service support
+    builder.Services.AddWindowsService();
 
     // Replace default logging with Serilog
     builder.Services.AddSerilog();

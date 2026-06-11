@@ -25,7 +25,14 @@ try
 {
     Log.Information("Starting KCF Monitoring WebApi...");
 
-    var builder = WebApplication.CreateBuilder(args);
+    var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+    {
+        Args = args,
+        ContentRootPath = AppContext.BaseDirectory
+    });
+
+    // Enable Windows Service support
+    builder.Host.UseWindowsService();
 
     // Replace default logging with Serilog
     builder.Host.UseSerilog();
