@@ -275,8 +275,13 @@ public class MqttWorker : BackgroundService
         int userId = await GetUserIdAsync(db, operatorName);
         int productId = await GetProductIdAsync(db, productName);
 
-        bool statusChanged = await ProcessStatusAsync(db, machineId.Value, message.Machine.Status, timestamp, userId, productId);
-        bool productionChanged = await ProcessProductionAsync(db, machineId.Value, userId, productId, message.Machine.Qty, timestamp);
+        // Process production first to get the productionId for status linking
+        var (productionChanged, latestProduction) = await ProcessProductionAsync(db, machineId.Value, userId, productId, message.Machine.Qty, timestamp);
+
+        // Always save production first so it has an Id for the status FK
+        await db.SaveChangesAsync();
+
+        bool statusChanged = await ProcessStatusAsync(db, machineId.Value, message.Machine.Status, timestamp, latestProduction.Id);
 
         await db.SaveChangesAsync();
 
@@ -409,7 +414,7 @@ public class MqttWorker : BackgroundService
         return newTestingProduct.Id;
     }
 
-    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int statusCode, DateTime timestamp, int userId, int productId)
+    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int statusCode, DateTime timestamp, int productionId)
     {
         bool isFirstMessageSinceStartup = _initializedMachines.TryAdd(machineId, true);
 
@@ -427,15 +432,13 @@ public class MqttWorker : BackgroundService
             isGapTooLarge || 
             lastStatus == null || 
             lastStatus.Code != statusCode || 
-            lastStatus.UserId != userId || 
-            lastStatus.ProductId != productId)
+            lastStatus.ProductionId != productionId)
         {
             db.Statuses.Add(new KcfMonitoringSystem.Domain.Entities.Status
             {
                 MachineId = machineId,
                 Code = statusCode,
-                UserId = userId,
-                ProductId = productId,
+                ProductionId = productionId,
                 CreatedAt = timestamp,
                 UpdatedAt = timestamp,
                 Duration = 0
@@ -450,7 +453,7 @@ public class MqttWorker : BackgroundService
         return false; // Status didn't change
     }
 
-    private async Task<bool> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)
+    private async Task<(bool Changed, KcfMonitoringSystem.Domain.Entities.Production Production)> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)
     {
         var lastProduction = await db.Productions
             .Where(p => p.MachineId == machineId)
@@ -462,10 +465,10 @@ public class MqttWorker : BackgroundService
             lastProduction.Quantity = qty;
             lastProduction.UpdatedAt = timestamp;
             db.Productions.Update(lastProduction);
-            return false; // Production didn't change
+            return (false, lastProduction); // Production didn't change
         }
 
-        db.Productions.Add(new KcfMonitoringSystem.Domain.Entities.Production
+        var newProduction = new KcfMonitoringSystem.Domain.Entities.Production
         {
             MachineId = machineId,
             UserId = userId,
@@ -473,7 +476,8 @@ public class MqttWorker : BackgroundService
             Quantity = qty,
             CreatedAt = timestamp,
             UpdatedAt = timestamp
-        });
-        return true; // Production changed
+        };
+        db.Productions.Add(newProduction);
+        return (true, newProduction); // Production changed
     }
 }
