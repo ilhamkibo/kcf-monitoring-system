@@ -25,7 +25,7 @@ public class StatusEndpointsTests : IClassFixture<EndpointTestsBase>
         // Arrange
         var statuses = new List<StatusDto> 
         { 
-            new(1, 1, "Machine 1", 1, DateTime.Now, DateTime.Now.AddMinutes(10), 600) 
+            new(1, 1, "Machine 1", 1, 1, "User 1", 1, "Part 1", "P001", DateTime.Now, DateTime.Now.AddMinutes(10), 600) 
         };
         var response = ApiPagedResponse<List<StatusDto>>.Ok(statuses, "Success");
         
@@ -50,7 +50,7 @@ public class StatusEndpointsTests : IClassFixture<EndpointTestsBase>
         // Arrange
         var timeline = new List<StatusTimelineDto> 
         { 
-            new(1, "Machine 1", new List<TimelineDto> { new(DateTime.Now, DateTime.Now.AddMinutes(10), 1) }) 
+            new(1, "Machine 1", new List<TimelineDto> { new(DateTime.Now, DateTime.Now.AddMinutes(10), 1, 1, "User 1", 1, "Part 1", "P001") }) 
         };
         var response = ApiResponse<List<StatusTimelineDto>>.Ok(timeline);
         

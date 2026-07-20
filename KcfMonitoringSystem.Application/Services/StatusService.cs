@@ -29,6 +29,11 @@ public class StatusService : IStatusService
                 x.MachineId,
                 x.Machine.Name,
                 x.Code,
+                x.Production.UserId,
+                x.Production.User.Name,
+                x.Production.ProductId,
+                x.Production.Product?.PartName,
+                x.Production.Product?.PartNo,
                 x.CreatedAt,
                 x.UpdatedAt,
                 x.Duration
@@ -65,13 +70,18 @@ public class StatusService : IStatusService
                 var timeline = g.Select(s => new TimelineDto(
                     s.CreatedAt,
                     s.UpdatedAt,
-                    s.Code
+                    s.Code,
+                    s.Production.UserId,
+                    s.Production.User.Name,
+                    s.Production.ProductId,
+                    s.Production.Product?.PartName,
+                    s.Production.Product?.PartNo
                 )).ToList();
 
                 if (timeline.Count > 0)
                 {
                     var last = timeline[^1];
-                    timeline[^1] = new TimelineDto(last.Start, null, last.Status);
+                    timeline[^1] = new TimelineDto(last.Start, null, last.Status, last.UserId, last.UserName, last.ProductId, last.ProductPartName, last.ProductPartNo);
                 }
 
                 return new StatusTimelineDto(
@@ -97,7 +107,7 @@ public class StatusService : IStatusService
             .GroupBy(s => s.CreatedAt.Date)
             .Select(g => new ActivityDto(
                 g.Key,
-                g.GroupBy(s => new { OperatorName = s.User.Name, ProductName = s.Product.ProductNo, s.Code })
+                g.GroupBy(s => new { OperatorName = s.Production.User.Name, ProductName = s.Production.Product!.ProductNo, s.Code })
                  .Select(sd => new ActivityDetailDto(
                      sd.Key.OperatorName,
                      sd.Key.ProductName,

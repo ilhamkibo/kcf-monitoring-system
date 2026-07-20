@@ -19,6 +19,10 @@ public class StatusRepository : IStatusRepository
     {
         var query = _db.Statuses
             .Include(x => x.Machine)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.User)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.Product)
             .AsQueryable();
 
         if (filter.MachineId.HasValue)
@@ -57,6 +61,10 @@ public class StatusRepository : IStatusRepository
     {
         var query = _db.Statuses
             .Include(x => x.Machine)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.User)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.Product)
             .AsQueryable();
 
         if (filter.MachineId.HasValue)
@@ -72,10 +80,10 @@ public class StatusRepository : IStatusRepository
             query = query.Where(x => x.CreatedAt < filter.EndDate.Value);
 
         if (filter.UserId.HasValue)
-            query = query.Where(x => x.UserId == filter.UserId.Value);
+            query = query.Where(x => x.Production.UserId == filter.UserId.Value);
 
         if (filter.ProductId.HasValue)
-            query = query.Where(x => x.ProductId == filter.ProductId.Value);
+            query = query.Where(x => x.Production.ProductId == filter.ProductId.Value);
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
@@ -92,8 +100,10 @@ public class StatusRepository : IStatusRepository
     public async Task<List<Status>> GetActivityStatusesAsync(StatusFilter filter)
     {
         var query = _db.Statuses
-            .Include(x => x.User)
-            .Include(x => x.Product)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.User)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.Product)
             .Include(x => x.Machine)
             .AsQueryable();
 
@@ -110,17 +120,17 @@ public class StatusRepository : IStatusRepository
             query = query.Where(x => x.CreatedAt < filter.EndDate.Value);
 
         if (filter.UserId.HasValue)
-            query = query.Where(x => x.UserId == filter.UserId.Value);
+            query = query.Where(x => x.Production.UserId == filter.UserId.Value);
 
         if (filter.ProductId.HasValue)
-            query = query.Where(x => x.ProductId == filter.ProductId.Value);
+            query = query.Where(x => x.Production.ProductId == filter.ProductId.Value);
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var search = filter.Search.ToLower();
             query = query.Where(x => x.Machine.Name.ToLower().Contains(search) ||
-                                     x.User.Name.ToLower().Contains(search) ||
-                                     x.Product.PartName.ToLower().Contains(search));
+                                     x.Production.User.Name.ToLower().Contains(search) ||
+                                     x.Production.Product!.PartName.ToLower().Contains(search));
         }
 
         return await query

@@ -5,6 +5,11 @@ public record StatusDto(
     int MachineId,
     string MachineName,
     int Code,
+    int UserId,
+    string UserName,
+    int? ProductId,
+    string? ProductPartName,
+    string? ProductPartNo,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     int Duration
@@ -19,7 +24,12 @@ public record StatusTimelineDto(
 public record TimelineDto(
     DateTime Start,
     DateTime? End,
-    int Status
+    int Status,
+    int UserId,
+    string UserName,
+    int? ProductId,
+    string? ProductPartName,
+    string? ProductPartNo
 );
 
 public record ActivityDto(
