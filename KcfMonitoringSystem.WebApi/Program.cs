@@ -4,15 +4,13 @@ using KcfMonitoringSystem.Infrastructure.Data;
 using KcfMonitoringSystem.Infrastructure.Persistence;
 using KcfMonitoringSystem.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Scalar.AspNetCore;
 using KcfMonitoringSystem.WebApi.Endpoints;
 using KcfMonitoringSystem.Application.Interfaces.Services;
-using KcfMonitoringSystem.Domain.Entities;
 
 // Setup Serilog
-var logPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Logs", "webapi-.log");
+var logPath = Path.Combine(AppContext.BaseDirectory, "Logs", "webapi-.log");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
@@ -171,4 +169,4 @@ finally
     Log.CloseAndFlush();
 }
 
-public partial class Program { }
+

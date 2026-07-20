@@ -27,6 +27,7 @@ public static class DbSeeder
         await UserSeeder.SeedAsync(db);
         await ProductSeeder.SeedAsync(db);
         await ProductionSeeder.SeedAsync(db);
+        await StatusSeeder.SeedAsync(db);
         await AlarmHistorySeeder.SeedAsync(db);
     }
 }

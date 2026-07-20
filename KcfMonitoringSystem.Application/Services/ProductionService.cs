@@ -29,10 +29,11 @@ public class ProductionService : IProductionService
             x.UserId,
             x.User?.Name ?? "",
             x.ProductId,
-            x.Product?.ProductNo,
+            x.Product?.PartNo,
             x.Product?.PartName,
             x.Quantity,
-            x.CreatedAt
+            x.CreatedAt,
+            x.UpdatedAt
         )).ToList();
 
         PaginationMetadata? pagination = null;

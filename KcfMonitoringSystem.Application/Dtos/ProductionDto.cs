@@ -7,8 +7,9 @@ public record ProductionDto(
     int UserId,
     string UserName,
     int? ProductId,
-    string? ProductNo,
+    string? PartNo,
     string? PartName,
     int Quantity,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    DateTime? UpdatedAt = null
 );
