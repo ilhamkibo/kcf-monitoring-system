@@ -49,6 +49,7 @@ public static class ProductEndpoints
         }).Produces<ApiResponse<ProductDto>>(StatusCodes.Status201Created)
           .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest);
 
+
         group.MapPut("/{id}", async (int id, UpdateProductDto dto, IProductService productService) =>
         {
             var response = await productService.UpdateAsync(id, dto);

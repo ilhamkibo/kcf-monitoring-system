@@ -7,7 +7,9 @@ public record ProductDto(
     string ProductNo,
     string PartName,
     string PartNo,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    int? Rpm = null,
+    string? Customer = null
 );
 
 public record CreateProductDto(
@@ -18,7 +20,10 @@ public record CreateProductDto(
     string PartName,
 
     [Required(ErrorMessage = "PartNo is required.")]
-    string PartNo
+    string PartNo,
+
+    int? Rpm = null,
+    string? Customer = null
 );
 
 public record UpdateProductDto(
@@ -29,5 +34,8 @@ public record UpdateProductDto(
     string PartName,
 
     [Required(ErrorMessage = "PartNo is required.")]
-    string PartNo
+    string PartNo,
+
+    int? Rpm = null,
+    string? Customer = null
 );

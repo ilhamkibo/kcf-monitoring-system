@@ -24,7 +24,9 @@ public class ProductService : IProductService
             x.ProductNo,
             x.PartName,
             x.PartNo,
-            x.CreatedAt
+            x.CreatedAt,
+            x.Rpm,
+            x.Customer
         )).ToList();
 
         PaginationMetadata? pagination = null;
@@ -54,7 +56,9 @@ public class ProductService : IProductService
             product.ProductNo,
             product.PartName,
             product.PartNo,
-            product.CreatedAt
+            product.CreatedAt,
+            product.Rpm,
+            product.Customer
         );
 
         return ApiResponse<ProductDto>.Ok(data);
@@ -72,7 +76,9 @@ public class ProductService : IProductService
             product.ProductNo,
             product.PartName,
             product.PartNo,
-            product.CreatedAt
+            product.CreatedAt,
+            product.Rpm,
+            product.Customer
         );
 
         return ApiResponse<ProductDto>.Ok(data);
@@ -88,7 +94,9 @@ public class ProductService : IProductService
         {
             ProductNo = dto.ProductNo,
             PartName = dto.PartName,
-            PartNo = dto.PartNo
+            PartNo = dto.PartNo,
+            Rpm = dto.Rpm,
+            Customer = dto.Customer
         };
 
         var createdProduct = await _repository.AddAsync(product);
@@ -98,11 +106,14 @@ public class ProductService : IProductService
             createdProduct.ProductNo,
             createdProduct.PartName,
             createdProduct.PartNo,
-            createdProduct.CreatedAt
+            createdProduct.CreatedAt,
+            createdProduct.Rpm,
+            createdProduct.Customer
         );
 
         return ApiResponse<ProductDto>.Ok(data, "Product created successfully");
     }
+
 
     public async Task<ApiResponse<ProductDto>> UpdateAsync(int id, UpdateProductDto dto)
     {
@@ -117,6 +128,9 @@ public class ProductService : IProductService
         product.ProductNo = dto.ProductNo;
         product.PartName = dto.PartName;
         product.PartNo = dto.PartNo;
+        product.Rpm = dto.Rpm;
+        product.Customer = dto.Customer;
+        product.UpdatedAt = DateTime.UtcNow;
 
         var updatedProduct = await _repository.UpdateAsync(product);
 
@@ -125,7 +139,9 @@ public class ProductService : IProductService
             updatedProduct.ProductNo,
             updatedProduct.PartName,
             updatedProduct.PartNo,
-            updatedProduct.CreatedAt
+            updatedProduct.CreatedAt,
+            updatedProduct.Rpm,
+            updatedProduct.Customer
         );
 
         return ApiResponse<ProductDto>.Ok(data, "Product updated successfully");
@@ -141,4 +157,5 @@ public class ProductService : IProductService
 
         return ApiResponse<bool>.Ok(true, "Product deleted successfully");
     }
+
 }
