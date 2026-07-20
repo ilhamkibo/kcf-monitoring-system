@@ -14,4 +14,5 @@ public class Production
     public Machine Machine { get; set; } = null!;
     public User User { get; set; } = null!;
     public Product? Product { get; set; }
+    public ICollection<Status> Statuses { get; set; } = new List<Status>();
 }

@@ -64,6 +64,8 @@ public class AppDbContext : DbContext
             entity.Property(p => p.ProductNo).IsRequired().HasMaxLength(50);
             entity.Property(p => p.PartName).IsRequired().HasMaxLength(200);
             entity.Property(p => p.PartNo).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.Rpm).IsRequired(false);
+            entity.Property(p => p.Customer).IsRequired(false).HasMaxLength(200);
         });
 
         // Status -> Machine (Many-to-One)
@@ -73,18 +75,11 @@ public class AppDbContext : DbContext
             .HasForeignKey(s => s.MachineId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Status → User (Many-to-One)
+        // Status → Production (Many-to-One)
         modelBuilder.Entity<Status>()
-            .HasOne(p => p.User)
-            .WithMany(u => u.Statuses)
-            .HasForeignKey(p => p.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Status → Product (Many-to-One)
-        modelBuilder.Entity<Status>()
-            .HasOne(p => p.Product)
+            .HasOne(s => s.Production)
             .WithMany(p => p.Statuses)
-            .HasForeignKey(p => p.ProductId)
+            .HasForeignKey(s => s.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // AlarmHistory → Machine (Many-to-One)
