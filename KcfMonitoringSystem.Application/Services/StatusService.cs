@@ -83,12 +83,6 @@ public class StatusService : IStatusService
                             s.Code
                         )).ToList();
 
-                        if (timeline.Count > 0)
-                        {
-                            var last = timeline[^1];
-                            timeline[^1] = new SimpleTimelineDto(last.Start, null, last.Status);
-                        }
-
                         return new ProductionTimelineDto(
                             pg.Key.UserName,
                             pg.Key.ProductName,
@@ -98,6 +92,16 @@ public class StatusService : IStatusService
                         );
                     })
                     .ToList();
+
+                if (productions.Count > 0)
+                {
+                    var lastProd = productions[^1];
+                    if (lastProd.Timeline.Count > 0)
+                    {
+                        var lastTimeline = lastProd.Timeline[^1];
+                        lastProd.Timeline[^1] = new SimpleTimelineDto(lastTimeline.Start, null, lastTimeline.Status);
+                    }
+                }
 
                 return new StatusTimelineDto(
                     g.Key.MachineId,
