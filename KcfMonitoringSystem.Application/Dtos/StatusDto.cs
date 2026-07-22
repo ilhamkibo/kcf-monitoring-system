@@ -18,18 +18,21 @@ public record StatusDto(
 public record StatusTimelineDto(
     int MachineId,
     string MachineName,
-    List<TimelineDto> Timeline
+    List<ProductionTimelineDto> Production
 );
 
-public record TimelineDto(
+public record ProductionTimelineDto(
+    string User,
+    string? ProductName,
+    string? PartNo,
+    int Quantity,
+    List<SimpleTimelineDto> Timeline
+);
+
+public record SimpleTimelineDto(
     DateTime Start,
     DateTime? End,
-    int Status,
-    int UserId,
-    string UserName,
-    int? ProductId,
-    string? ProductPartName,
-    string? ProductPartNo
+    int Status
 );
 
 public record ActivityDto(

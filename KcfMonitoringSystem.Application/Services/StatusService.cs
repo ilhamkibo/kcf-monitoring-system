@@ -67,27 +67,42 @@ public class StatusService : IStatusService
             .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
             .Select(g =>
             {
-                var timeline = g.Select(s => new TimelineDto(
-                    s.CreatedAt,
-                    s.UpdatedAt,
-                    s.Code,
-                    s.Production.UserId,
-                    s.Production.User.Name,
-                    s.Production.ProductId,
-                    s.Production.Product?.PartName,
-                    s.Production.Product?.PartNo
-                )).ToList();
+                var productions = g
+                    .GroupBy(s => new
+                    {
+                        UserName = s.Production.User.Name,
+                        ProductName = s.Production.Product?.PartName,
+                        PartNo = s.Production.Product?.PartNo,
+                        s.Production.Quantity
+                    })
+                    .Select(pg =>
+                    {
+                        var timeline = pg.Select(s => new SimpleTimelineDto(
+                            s.CreatedAt,
+                            s.UpdatedAt,
+                            s.Code
+                        )).ToList();
 
-                if (timeline.Count > 0)
-                {
-                    var last = timeline[^1];
-                    timeline[^1] = new TimelineDto(last.Start, null, last.Status, last.UserId, last.UserName, last.ProductId, last.ProductPartName, last.ProductPartNo);
-                }
+                        if (timeline.Count > 0)
+                        {
+                            var last = timeline[^1];
+                            timeline[^1] = new SimpleTimelineDto(last.Start, null, last.Status);
+                        }
+
+                        return new ProductionTimelineDto(
+                            pg.Key.UserName,
+                            pg.Key.ProductName,
+                            pg.Key.PartNo,
+                            pg.Key.Quantity,
+                            timeline
+                        );
+                    })
+                    .ToList();
 
                 return new StatusTimelineDto(
                     g.Key.MachineId,
                     g.Key.MachineName,
-                    timeline
+                    productions
                 );
             })
             .ToList();

@@ -70,7 +70,7 @@ public static class StatusEndpoints
                 return Results.NotFound(ApiResponse<StatusTimelineDto>.Error("Machine not found"));
             }
 
-            var emptyTimeline = new StatusTimelineDto(machineResponse.Data.Id, machineResponse.Data.Name, new List<TimelineDto>());
+            var emptyTimeline = new StatusTimelineDto(machineResponse.Data.Id, machineResponse.Data.Name, new List<ProductionTimelineDto>());
             return Results.Ok(ApiResponse<StatusTimelineDto>.Ok(emptyTimeline));
         }).Produces<ApiResponse<StatusTimelineDto>>();
 
