@@ -73,8 +73,12 @@ public class StatusRepository : IStatusRepository
         if (filter.Code.HasValue)
             query = query.Where(x => x.Code == filter.Code.Value);
 
+        // Include statuses that overlap with the date range:
+        // status [CreatedAt, UpdatedAt] overlaps with [StartDate, EndDate]
+        // StartDate filter: check UpdatedAt >= StartDate (if null, use CreatedAt)
+        // EndDate filter: check CreatedAt < EndDate
         if (filter.StartDate.HasValue)
-            query = query.Where(x => x.CreatedAt >= filter.StartDate.Value);
+            query = query.Where(x => (x.UpdatedAt ?? x.CreatedAt) >= filter.StartDate.Value);
 
         if (filter.EndDate.HasValue)
             query = query.Where(x => x.CreatedAt < filter.EndDate.Value);

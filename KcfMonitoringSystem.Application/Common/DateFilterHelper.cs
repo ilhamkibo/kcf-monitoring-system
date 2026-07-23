@@ -19,16 +19,16 @@ public static class DateFilterHelper
                 : endDate.Value;
 
             return (
-                DateTime.SpecifyKind(min.Date, DateTimeKind.Local).ToUniversalTime(),
-                DateTime.SpecifyKind(max.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime()
+                min.Date,
+                max.Date.AddDays(1)
             );
         }
 
         var single = (startDate ?? endDate)!.Value.Date;
 
         return (
-            DateTime.SpecifyKind(single, DateTimeKind.Local).ToUniversalTime(),
-            DateTime.SpecifyKind(single.AddDays(1), DateTimeKind.Local).ToUniversalTime()
+            single,
+            single.AddDays(1)
         );
     }
 }

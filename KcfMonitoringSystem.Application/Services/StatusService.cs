@@ -63,10 +63,19 @@ public class StatusService : IStatusService
 
         var statuses = await _repository.GetTimelineStatusesAsync(filter);
 
+        var today = DateTime.Now.Date;
+        var isToday = (filter.StartDate == null || filter.StartDate.Value.Date <= today) &&
+                      (filter.EndDate == null || filter.EndDate.Value.Date >= today);
+
         var data = statuses
             .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
             .Select(g =>
             {
+                // Find the globally last status (highest Id) for this machine
+                var latestStatus = g
+                    .OrderByDescending(s => s.Id)
+                    .FirstOrDefault();
+
                 var productions = g
                     .GroupBy(s => new
                     {
@@ -93,15 +102,24 @@ public class StatusService : IStatusService
                     })
                     .ToList();
 
-                if (productions.Count > 0)
+                // Only set null end on the actual running status (last status of last production)
+                // and only when the query covers today
+                if (isToday && latestStatus != null)
                 {
-                    var lastProd = productions[^1];
-                    if (lastProd.Timeline.Count > 0)
+                    foreach (var prod in productions)
                     {
-                        var lastTimeline = lastProd.Timeline[^1];
-                        lastProd.Timeline[^1] = new SimpleTimelineDto(lastTimeline.Start, null, lastTimeline.Status);
+                        for (int i = 0; i < prod.Timeline.Count; i++)
+                        {
+                            var t = prod.Timeline[i];
+                            if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
+                            {
+                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status);
+                                goto done;
+                            }
+                        }
                     }
                 }
+                done:
 
                 return new StatusTimelineDto(
                     g.Key.MachineId,
