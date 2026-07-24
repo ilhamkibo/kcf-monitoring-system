@@ -26,7 +26,7 @@ public class MachineRepository : IMachineRepository
 
         var totalCount = await query.CountAsync();
 
-        query = query.OrderBy(x => x.Id);
+        query = query.OrderBy(x => x.Order).ThenBy(x => x.Id);
 
         if (filter.Paginate == true)
         {
@@ -56,6 +56,7 @@ public class MachineRepository : IMachineRepository
             return;
 
         existingMachine.Name = machine.Name.Trim();
+        existingMachine.Order = machine.Order;
         existingMachine.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

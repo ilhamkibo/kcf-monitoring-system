@@ -22,6 +22,7 @@ public class MachineService : IMachineService
         var data = machines.Select(x => new MachineDto(
             x.Id,
             x.Name,
+            x.Order,
             x.CreatedAt
         )).ToList();
 
@@ -49,6 +50,7 @@ public class MachineService : IMachineService
         var data = new MachineDto(
             machine.Id,
             machine.Name,
+            machine.Order,
             machine.CreatedAt
         );
         return ApiResponse<MachineDto>.Ok(data);
@@ -71,6 +73,7 @@ public class MachineService : IMachineService
         var machine = new Machine
         {
             Name = createMachineDto.Name.Trim(),
+            Order = createMachineDto.Order,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -80,6 +83,7 @@ public class MachineService : IMachineService
         var dto = new MachineDto(
             machine.Id,
             machine.Name,
+            machine.Order,
             machine.CreatedAt
         );
 
@@ -105,6 +109,7 @@ public class MachineService : IMachineService
         }
 
         machine.Name = updateMachineDto.Name.Trim();
+        machine.Order = updateMachineDto.Order;
         machine.UpdatedAt = DateTime.UtcNow;
 
         await _machineRepository.UpdateAsync(id, machine);
@@ -112,6 +117,7 @@ public class MachineService : IMachineService
         var dto = new MachineDto(
             machine.Id,
             machine.Name,
+            machine.Order,
             machine.CreatedAt
         );
 
