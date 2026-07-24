@@ -462,11 +462,28 @@ public class MqttWorker : BackgroundService
 
         if (lastProduction != null && lastProduction.UserId == userId && lastProduction.ProductId == productId)
         {
+            // Same operator & product — update raw counter
             lastProduction.Quantity = qty;
+
+            // Calculate ActualQty: find the production before this one
+            var prevProduction = await db.Productions
+                .Where(p => p.MachineId == machineId && p.Id < lastProduction.Id)
+                .OrderByDescending(p => p.Id)
+                .FirstOrDefaultAsync();
+
+            lastProduction.ActualQty = (prevProduction != null && prevProduction.ProductId == lastProduction.ProductId)
+                ? qty - prevProduction.Quantity
+                : qty;
+
             lastProduction.UpdatedAt = timestamp;
             db.Productions.Update(lastProduction);
             return (false, lastProduction); // Production didn't change
         }
+
+        // Calculate ActualQty for new production
+        int actualQty = (lastProduction != null && lastProduction.ProductId == productId)
+            ? qty - lastProduction.Quantity   // same product: counter not reset, delta from previous
+            : qty;                            // different product: counter reset, raw qty = actual
 
         var newProduction = new KcfMonitoringSystem.Domain.Entities.Production
         {
@@ -474,6 +491,7 @@ public class MqttWorker : BackgroundService
             UserId = userId,
             ProductId = productId,
             Quantity = qty,
+            ActualQty = actualQty,
             CreatedAt = timestamp,
             UpdatedAt = timestamp
         };

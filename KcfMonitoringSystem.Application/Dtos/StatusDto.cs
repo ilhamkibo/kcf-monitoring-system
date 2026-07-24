@@ -26,6 +26,8 @@ public record ProductionTimelineDto(
     string? ProductName,
     string? PartNo,
     int Quantity,
+    DateTime Start,
+    DateTime? End,
     List<SimpleTimelineDto> Timeline
 );
 

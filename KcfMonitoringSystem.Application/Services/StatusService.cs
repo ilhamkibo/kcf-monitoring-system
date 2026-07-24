@@ -81,8 +81,10 @@ public class StatusService : IStatusService
                     {
                         UserName = s.Production.User.Name,
                         ProductName = s.Production.Product?.PartName,
-                        PartNo = s.Production.Product?.PartNo,
-                        s.Production.Quantity
+                        s.Production.Product?.PartNo,
+                        Quantity = s.Production.ActualQty,
+                        s.Production.CreatedAt,
+                        s.Production.UpdatedAt,
                     })
                     .Select(pg =>
                     {
@@ -97,6 +99,8 @@ public class StatusService : IStatusService
                             pg.Key.ProductName,
                             pg.Key.PartNo,
                             pg.Key.Quantity,
+                            pg.Key.CreatedAt,
+                            pg.Key.UpdatedAt,
                             timeline
                         );
                     })

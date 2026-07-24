@@ -45,12 +45,14 @@ public static class ProductionSeeder
                 ? products[Random.Shared.Next(products.Count)].Id
                 : (int?)null;
 
+            var qty = Random.Shared.Next(100, 500);
             productions.Add(new Production
             {
                 UserId = user.Id,
                 MachineId = user.MachineId!.Value,
                 ProductId = productId,
-                Quantity = Random.Shared.Next(100, 500),
+                Quantity = qty,
+                ActualQty = qty,
                 CreatedAt = now,
                 UpdatedAt = now
             });
