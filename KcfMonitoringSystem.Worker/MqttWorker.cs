@@ -7,8 +7,8 @@ using KcfMonitoringSystem.Worker.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MQTTnet;
-using MQTTnet.Packets;
 using MQTTnet.Protocol;
+using KcfMonitoringSystem.Domain.Entities;
 
 namespace KcfMonitoringSystem.Worker;
 
@@ -236,8 +236,11 @@ public class MqttWorker : BackgroundService
             }
         }
 
+        // Find a matching Status (Code == 2, within 1 minute, no existing AlarmHistory link)
+        int? matchedStatusId = await FindMatchingStatusIdAsync(db, machine.Id, message.Ts);
+
         // If it's a trigger, or we couldn't find the triggered alarm, create a new record
-        var alarmHistory = new KcfMonitoringSystem.Domain.Entities.AlarmHistory
+        var alarmHistory = new AlarmHistory
         {
             MachineId = machine.Id,
             AlarmState = message.Status.Trim(),
@@ -245,6 +248,7 @@ public class MqttWorker : BackgroundService
             RecoverTime = message.RecoverTime,
             Message = message.Message.Trim(),
             Timestamp = message.Ts,
+            StatusId = matchedStatusId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -358,7 +362,7 @@ public class MqttWorker : BackgroundService
         }
 
         // Create the "testing" user if it doesn't exist
-        var newTestingUser = new KcfMonitoringSystem.Domain.Entities.User
+        var newTestingUser = new User
         {
             Name = "testing",
             Role = "Operator",
@@ -401,7 +405,7 @@ public class MqttWorker : BackgroundService
         }
 
         // Create the "testing" product if it doesn't exist
-        var newTestingProduct = new KcfMonitoringSystem.Domain.Entities.Product
+        var newTestingProduct = new Product
         {
             ProductNo = "testing",
             PartName = "testing",
@@ -434,7 +438,7 @@ public class MqttWorker : BackgroundService
             lastStatus.Code != statusCode ||
             lastStatus.ProductionId != productionId)
         {
-            db.Statuses.Add(new KcfMonitoringSystem.Domain.Entities.Status
+            db.Statuses.Add(new Status
             {
                 MachineId = machineId,
                 Code = statusCode,
@@ -453,7 +457,25 @@ public class MqttWorker : BackgroundService
         return false; // Status didn't change
     }
 
-    private async Task<(bool Changed, KcfMonitoringSystem.Domain.Entities.Production Production)> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)
+    private async Task<int?> FindMatchingStatusIdAsync(AppDbContext db, int machineId, DateTime alarmTimestamp)
+    {
+        // Find the most recent Status for the same machine where:
+        // 1. Code == 2
+        // 2. Status.CreatedAt is within 1 minute of the alarm timestamp
+        // 3. The Status does not already have an AlarmHistory linked to it
+        var matchedStatus = await db.Statuses
+            .Where(s => s.MachineId == machineId &&
+                         s.Code == 2 &&
+                         s.CreatedAt >= alarmTimestamp.AddMinutes(-1) &&
+                         s.CreatedAt <= alarmTimestamp.AddMinutes(1) &&
+                         !s.AlarmHistories.Any())
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        return matchedStatus?.Id;
+    }
+
+    private async Task<(bool Changed, Production)> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)
     {
         var lastProduction = await db.Productions
             .Where(p => p.MachineId == machineId)
@@ -485,7 +507,7 @@ public class MqttWorker : BackgroundService
             ? qty - lastProduction.Quantity   // same product: counter not reset, delta from previous
             : qty;                            // different product: counter reset, raw qty = actual
 
-        var newProduction = new KcfMonitoringSystem.Domain.Entities.Production
+        var newProduction = new Production
         {
             MachineId = machineId,
             UserId = userId,
