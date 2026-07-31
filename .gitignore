@@ -477,12 +477,14 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-# Vim temporary swap files
+
+# Vim temporary swap files
 *.swp
 
 # Local App Settings
 appsettings.Development.json
 appsettings.Local.json
 appsettings.Production.json
+appsettings.json
 
 deploy.bat
