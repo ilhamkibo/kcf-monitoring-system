@@ -27,7 +27,7 @@ public class AlarmHistoryService : IAlarmHistoryService
             x.Id,
             x.MachineId,
             x.Machine.Name,
-            x.Status,
+            x.AlarmState,
             x.TriggerTime,
             x.RecoverTime,
             x.Message,

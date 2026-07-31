@@ -82,11 +82,20 @@ public class AppDbContext : DbContext
             .HasForeignKey(s => s.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // AlarmHistory → Machine (Many-to-One)
-        modelBuilder.Entity<AlarmHistory>()
-            .HasOne(a => a.Machine)
-            .WithMany(m => m.AlarmHistories)
-            .HasForeignKey(a => a.MachineId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // AlarmHistory
+        modelBuilder.Entity<AlarmHistory>(entity =>
+        {
+            entity.Property(a => a.AlarmState).IsRequired().HasMaxLength(50);
+
+            entity.HasOne(a => a.Machine)
+                .WithMany(m => m.AlarmHistories)
+                .HasForeignKey(a => a.MachineId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(a => a.Status)
+                .WithMany(s => s.AlarmHistories)
+                .HasForeignKey(a => a.StatusId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
     }
 }

@@ -14,4 +14,5 @@ public class Status
     // Navigation
     public Machine Machine { get; set; } = null!;
     public Production Production { get; set; } = null!;
+    public ICollection<AlarmHistory> AlarmHistories { get; set; } = new List<AlarmHistory>();
 }

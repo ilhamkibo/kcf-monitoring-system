@@ -214,16 +214,16 @@ public class MqttWorker : BackgroundService
         {
             // Try to find the corresponding active triggered alarm to update it
             var existingAlarm = await db.AlarmHistories
-                .Where(a => a.MachineId == machine.Id && 
-                            a.TriggerTime == message.TriggerTime && 
-                            a.Message == message.Message && 
-                            a.Status == "triggered")
+                .Where(a => a.MachineId == machine.Id &&
+                            a.TriggerTime == message.TriggerTime &&
+                            a.Message == message.Message &&
+                            a.AlarmState == "triggered")
                 .OrderByDescending(a => a.CreatedAt)
                 .FirstOrDefaultAsync();
 
             if (existingAlarm != null)
             {
-                existingAlarm.Status = "recovered";
+                existingAlarm.AlarmState = "recovered";
                 existingAlarm.RecoverTime = message.RecoverTime ?? message.Ts;
                 existingAlarm.Timestamp = message.Ts;
                 existingAlarm.UpdatedAt = DateTime.UtcNow;
@@ -240,7 +240,7 @@ public class MqttWorker : BackgroundService
         var alarmHistory = new KcfMonitoringSystem.Domain.Entities.AlarmHistory
         {
             MachineId = machine.Id,
-            Status = message.Status.Trim(),
+            AlarmState = message.Status.Trim(),
             TriggerTime = message.TriggerTime,
             RecoverTime = message.RecoverTime,
             Message = message.Message.Trim(),
@@ -339,8 +339,8 @@ public class MqttWorker : BackgroundService
         }
 
         // 2. Partial match (DB name contains MQTT name OR MQTT name contains DB name)
-        user = await db.Users.FirstOrDefaultAsync(u => 
-            u.Name.ToLower().Contains(operatorName.ToLower()) || 
+        user = await db.Users.FirstOrDefaultAsync(u =>
+            u.Name.ToLower().Contains(operatorName.ToLower()) ||
             operatorName.ToLower().Contains(u.Name.ToLower()));
         if (user != null)
         {
@@ -425,13 +425,13 @@ public class MqttWorker : BackgroundService
 
         // Check if the gap since the last update is too large (e.g. worker was offline or machine was powered off)
         // If the gap is > 2 minutes, we treat this as a new session and do not stretch the previous duration.
-        bool isGapTooLarge = lastStatus != null && 
+        bool isGapTooLarge = lastStatus != null &&
             (timestamp - (lastStatus.UpdatedAt ?? lastStatus.CreatedAt)).TotalMinutes > 2;
 
-        if (isFirstMessageSinceStartup || 
-            isGapTooLarge || 
-            lastStatus == null || 
-            lastStatus.Code != statusCode || 
+        if (isFirstMessageSinceStartup ||
+            isGapTooLarge ||
+            lastStatus == null ||
+            lastStatus.Code != statusCode ||
             lastStatus.ProductionId != productionId)
         {
             db.Statuses.Add(new KcfMonitoringSystem.Domain.Entities.Status

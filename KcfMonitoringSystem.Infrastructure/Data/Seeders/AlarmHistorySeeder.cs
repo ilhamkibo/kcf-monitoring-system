@@ -25,11 +25,11 @@ public static class AlarmHistorySeeder
             {
                 var triggerTime = now.AddDays(-i).AddHours(-i);
                 var recoverTime = triggerTime.AddMinutes(30 + i * 10);
-                
+
                 alarmHistories.Add(new AlarmHistory
                 {
                     MachineId = machine.Id,
-                    Status = "recovered",
+                    AlarmState = "recovered",
                     TriggerTime = triggerTime,
                     RecoverTime = recoverTime,
                     Message = $"Alarm for {machine.Name} - Resolved case {i}",
@@ -46,7 +46,7 @@ public static class AlarmHistorySeeder
                 alarmHistories.Add(new AlarmHistory
                 {
                     MachineId = machine.Id,
-                    Status = "triggered",
+                    AlarmState = "triggered",
                     TriggerTime = triggerTime,
                     RecoverTime = null,
                     Message = $"Active Alarm for {machine.Name} - Critical state",
@@ -63,11 +63,11 @@ public static class AlarmHistorySeeder
         {
             var triggerTime = now.AddDays(-10).AddHours(-i);
             var recoverTime = triggerTime.AddMinutes(15);
-            
+
             alarmHistories.Add(new AlarmHistory
             {
                 MachineId = bulkMachine.Id,
-                Status = "recovered",
+                AlarmState = "recovered",
                 TriggerTime = triggerTime,
                 RecoverTime = recoverTime,
                 Message = $"Bulk History {i} for {bulkMachine.Name}",

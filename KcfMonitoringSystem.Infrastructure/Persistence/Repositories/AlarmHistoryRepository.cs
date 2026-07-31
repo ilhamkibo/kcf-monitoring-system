@@ -28,7 +28,7 @@ public class AlarmHistoryRepository : IAlarmHistoryRepository
         if (!string.IsNullOrWhiteSpace(filter.Status))
         {
             var status = filter.Status.ToLower();
-            query = query.Where(x => x.Status.ToLower() == status);
+            query = query.Where(x => x.AlarmState.ToLower() == status);
         }
 
         if (filter.StartDate.HasValue)
