@@ -34,7 +34,8 @@ public record ProductionTimelineDto(
 public record SimpleTimelineDto(
     DateTime Start,
     DateTime? End,
-    int Status
+    int Status,
+    string? Message = null
 );
 
 public record ActivityDto(

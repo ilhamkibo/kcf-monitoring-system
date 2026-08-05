@@ -65,6 +65,7 @@ public class StatusRepository : IStatusRepository
                 .ThenInclude(p => p.User)
             .Include(x => x.Production)
                 .ThenInclude(p => p.Product)
+            .Include(x => x.AlarmHistories)
             .AsQueryable();
 
         if (filter.MachineId.HasValue)

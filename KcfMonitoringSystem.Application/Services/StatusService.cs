@@ -91,7 +91,10 @@ public class StatusService : IStatusService
                         var timeline = pg.Select(s => new SimpleTimelineDto(
                             s.CreatedAt,
                             s.UpdatedAt,
-                            s.Code
+                            s.Code,
+                            s.Code == 2
+                                ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
+                                : ""
                         )).ToList();
 
                         return new ProductionTimelineDto(
@@ -117,13 +120,13 @@ public class StatusService : IStatusService
                             var t = prod.Timeline[i];
                             if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
                             {
-                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status);
+                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status, t.Message);
                                 goto done;
                             }
                         }
                     }
                 }
-                done:
+            done:
 
                 return new StatusTimelineDto(
                     g.Key.MachineId,
