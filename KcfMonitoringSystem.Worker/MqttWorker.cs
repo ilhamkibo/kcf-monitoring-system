@@ -228,10 +228,12 @@ public class MqttWorker : BackgroundService
                 existingAlarm.Timestamp = message.Ts;
                 existingAlarm.UpdatedAt = DateTime.UtcNow;
 
-                // Fill StatusId on recovery if not already set — status is guaranteed to exist by now
+                // Fill StatusId on recovery if not already set.
+                // Use TriggerTime as reference because Status is created when alarm triggers,
+                // not when it recovers. At this point, status is guaranteed to exist in DB.
                 if (existingAlarm.StatusId == null)
                 {
-                    existingAlarm.StatusId = await FindMatchingStatusIdAsync(db, machine.Id, message.Ts);
+                    existingAlarm.StatusId = await FindMatchingStatusIdAsync(db, machine.Id, existingAlarm.TriggerTime);
                 }
 
                 db.AlarmHistories.Update(existingAlarm);
@@ -464,18 +466,27 @@ public class MqttWorker : BackgroundService
     {
         // Find the most recent Status for the same machine where:
         // 1. Code == 2
-        // 2. Status.CreatedAt is within 1 minute of the alarm timestamp
-        // 3. The Status does not already have an AlarmHistory linked to it
-        var matchedStatus = await db.Statuses
+        // 2. Status.CreatedAt is within 2 minutes of the alarm TriggerTime
+        // Priority: prefer status not yet linked to any alarm, then fall back to any closest match.
+        var candidateStatuses = await db.Statuses
             .Where(s => s.MachineId == machineId &&
                          s.Code == 2 &&
-                         s.CreatedAt >= alarmTimestamp.AddMinutes(-1) &&
-                         s.CreatedAt <= alarmTimestamp.AddMinutes(1) &&
-                         !s.AlarmHistories.Any())
+                         s.CreatedAt >= alarmTimestamp.AddMinutes(-2) &&
+                         s.CreatedAt <= alarmTimestamp.AddMinutes(2))
             .OrderByDescending(s => s.CreatedAt)
-            .FirstOrDefaultAsync();
+            .ToListAsync();
 
-        return matchedStatus?.Id;
+        if (!candidateStatuses.Any())
+            return null;
+
+        // Prefer a status not yet linked to any alarm
+        var unlinked = candidateStatuses.FirstOrDefault(s => !s.AlarmHistories.Any());
+        if (unlinked != null)
+            return unlinked.Id;
+
+        // Fallback: return closest status even if already linked
+        // (handles edge case where status was created before alarm triggered)
+        return candidateStatuses.First().Id;
     }
 
     private async Task<(bool Changed, Production)> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)
