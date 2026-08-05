@@ -228,6 +228,12 @@ public class MqttWorker : BackgroundService
                 existingAlarm.Timestamp = message.Ts;
                 existingAlarm.UpdatedAt = DateTime.UtcNow;
 
+                // Fill StatusId on recovery if not already set — status is guaranteed to exist by now
+                if (existingAlarm.StatusId == null)
+                {
+                    existingAlarm.StatusId = await FindMatchingStatusIdAsync(db, machine.Id, message.Ts);
+                }
+
                 db.AlarmHistories.Update(existingAlarm);
                 await db.SaveChangesAsync();
 
@@ -236,10 +242,7 @@ public class MqttWorker : BackgroundService
             }
         }
 
-        // Find a matching Status (Code == 2, within 1 minute, no existing AlarmHistory link)
-        int? matchedStatusId = await FindMatchingStatusIdAsync(db, machine.Id, message.Ts);
-
-        // If it's a trigger, or we couldn't find the triggered alarm, create a new record
+        // Insert new alarm record — StatusId will be filled later when recovered
         var alarmHistory = new AlarmHistory
         {
             MachineId = machine.Id,
@@ -248,7 +251,7 @@ public class MqttWorker : BackgroundService
             RecoverTime = message.RecoverTime,
             Message = message.Message.Trim(),
             Timestamp = message.Ts,
-            StatusId = matchedStatusId,
+            StatusId = null,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
