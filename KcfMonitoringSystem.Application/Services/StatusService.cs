@@ -36,7 +36,8 @@ public class StatusService : IStatusService
                 x.Production.Product?.PartNo,
                 x.CreatedAt,
                 x.UpdatedAt,
-                x.Duration
+                x.Duration,
+                x.Qty
             )
         ).ToList();
 
@@ -94,7 +95,8 @@ public class StatusService : IStatusService
                             s.Code,
                             s.Code == 2
                                 ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
-                                : ""
+                                : "",
+                            s.Qty
                         )).ToList();
 
                         return new ProductionTimelineDto(
@@ -120,7 +122,7 @@ public class StatusService : IStatusService
                             var t = prod.Timeline[i];
                             if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
                             {
-                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status, t.Message);
+                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status, t.Message, t.Counter);
                                 goto done;
                             }
                         }

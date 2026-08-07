@@ -12,7 +12,8 @@ public record StatusDto(
     string? ProductPartNo,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    int Duration
+    int Duration,
+    int Qty
 );
 
 public record StatusTimelineDto(
@@ -35,7 +36,8 @@ public record SimpleTimelineDto(
     DateTime Start,
     DateTime? End,
     int Status,
-    string? Message = null
+    string? Message = null,
+    int Counter = 0
 );
 
 public record ActivityDto(

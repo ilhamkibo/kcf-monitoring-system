@@ -6,7 +6,7 @@ public class Status
     public int MachineId { get; set; }
     public int Code { get; set; }
     public int ProductionId { get; set; }
-    public int? Qty { get; set; }
+    public int Qty { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
