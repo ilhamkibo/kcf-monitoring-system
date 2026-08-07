@@ -290,7 +290,7 @@ public class MqttWorker : BackgroundService
         // Always save production first so it has an Id for the status FK
         await db.SaveChangesAsync();
 
-        bool statusChanged = await ProcessStatusAsync(db, machineId.Value, message.Machine.Status, timestamp, latestProduction.Id);
+        bool statusChanged = await ProcessStatusAsync(db, machineId.Value, message.Machine.Qty, message.Machine.Status, timestamp, latestProduction.Id);
 
         await db.SaveChangesAsync();
 
@@ -423,7 +423,7 @@ public class MqttWorker : BackgroundService
         return newTestingProduct.Id;
     }
 
-    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int statusCode, DateTime timestamp, int productionId)
+    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int qty, int statusCode, DateTime timestamp, int productionId)
     {
         bool isFirstMessageSinceStartup = _initializedMachines.TryAdd(machineId, true);
 
@@ -435,7 +435,7 @@ public class MqttWorker : BackgroundService
         // Check if the gap since the last update is too large (e.g. worker was offline or machine was powered off)
         // If the gap is > 2 minutes, we treat this as a new session and do not stretch the previous duration.
         bool isGapTooLarge = lastStatus != null &&
-            (timestamp - (lastStatus.UpdatedAt ?? lastStatus.CreatedAt)).TotalMinutes > 2;
+            (timestamp - (lastStatus.UpdatedAt ?? lastStatus.CreatedAt)).TotalMinutes > 10;
 
         if (isFirstMessageSinceStartup ||
             isGapTooLarge ||
@@ -450,7 +450,8 @@ public class MqttWorker : BackgroundService
                 ProductionId = productionId,
                 CreatedAt = timestamp,
                 UpdatedAt = timestamp,
-                Duration = 0
+                Duration = 0,
+                Qty = qty
             });
             return true; // New status or session started
         }
@@ -458,6 +459,7 @@ public class MqttWorker : BackgroundService
         // Continuous update within the same session
         lastStatus.UpdatedAt = timestamp;
         lastStatus.Duration = (int)(timestamp - lastStatus.CreatedAt).TotalSeconds;
+        lastStatus.Qty = qty;
         db.Statuses.Update(lastStatus);
         return false; // Status didn't change
     }
