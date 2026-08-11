@@ -8,4 +8,5 @@ public interface IStatusRepository
     Task<(List<Status> Data, int TotalCount)> GetAllAsync(StatusFilter filter);
     Task<List<Status>> GetTimelineStatusesAsync(StatusFilter filter);
     Task<List<Status>> GetActivityStatusesAsync(StatusFilter filter);
+    Task<List<Status>> GetLatestProductStatusesAsync(StatusFilter filter);
 }

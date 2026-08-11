@@ -9,4 +9,5 @@ public interface IStatusService
     Task<ApiPagedResponse<List<StatusDto>>> GetAllAsync(StatusFilter filter);
     Task<ApiResponse<List<StatusTimelineDto>>> GetTimelineAsync(StatusFilter filter);
     Task<ApiResponse<List<ActivityDto>>> GetActivityAsync(StatusFilter filter);
+    Task<ApiResponse<List<StatusTimelineDto>>> GetLatestProductTimelineAsync(StatusFilter filter);
 }

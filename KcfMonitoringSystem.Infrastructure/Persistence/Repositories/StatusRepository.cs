@@ -142,4 +142,90 @@ public class StatusRepository : IStatusRepository
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<List<Status>> GetLatestProductStatusesAsync(StatusFilter filter)
+    {
+        var query = _db.Statuses
+            .Include(x => x.Machine)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.User)
+            .Include(x => x.Production)
+                .ThenInclude(p => p.Product)
+            .Include(x => x.AlarmHistories)
+            .AsQueryable();
+
+        if (filter.MachineId.HasValue)
+            query = query.Where(x => x.MachineId == filter.MachineId.Value);
+
+        if (filter.Code.HasValue)
+            query = query.Where(x => x.Code == filter.Code.Value);
+
+        if (filter.StartDate.HasValue)
+            query = query.Where(x => (x.UpdatedAt ?? x.CreatedAt) >= filter.StartDate.Value);
+
+        if (filter.EndDate.HasValue)
+            query = query.Where(x => x.CreatedAt < filter.EndDate.Value);
+
+        if (filter.UserId.HasValue)
+            query = query.Where(x => x.Production.UserId == filter.UserId.Value);
+
+        if (filter.ProductId.HasValue)
+            query = query.Where(x => x.Production.ProductId == filter.ProductId.Value);
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.ToLower();
+            query = query.Where(x => x.Machine.Name.ToLower().Contains(search));
+        }
+
+        // Get all productions for matching machines, ordered by CreatedAt DESC
+        var productionQuery = _db.Productions.AsQueryable();
+
+        if (filter.MachineId.HasValue)
+            productionQuery = productionQuery.Where(p => p.MachineId == filter.MachineId.Value);
+
+        if (filter.UserId.HasValue)
+            productionQuery = productionQuery.Where(p => p.UserId == filter.UserId.Value);
+
+        if (filter.StartDate.HasValue)
+            productionQuery = productionQuery.Where(p => p.UpdatedAt >= filter.StartDate.Value);
+
+        if (filter.EndDate.HasValue)
+            productionQuery = productionQuery.Where(p => p.CreatedAt < filter.EndDate.Value);
+
+        var allProductions = await productionQuery
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        // Walk backwards per machine: collect contiguous productions with same ProductId
+        var validProductionIds = new HashSet<int>();
+        var machineGroups = allProductions.GroupBy(p => p.MachineId);
+
+        foreach (var machineGroup in machineGroups)
+        {
+            var ordered = machineGroup.OrderByDescending(p => p.CreatedAt).ToList();
+            if (ordered.Count == 0) continue;
+
+            var currentProductId = ordered[0].ProductId;
+            foreach (var production in ordered)
+            {
+                if (production.ProductId == currentProductId)
+                {
+                    validProductionIds.Add(production.Id);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        // Filter statuses to only include those from valid productions
+        query = query.Where(x => validProductionIds.Contains(x.ProductionId));
+
+        return await query
+            .OrderBy(x => x.MachineId)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync();
+    }
 }

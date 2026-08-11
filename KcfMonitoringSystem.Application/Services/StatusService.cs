@@ -168,4 +168,86 @@ public class StatusService : IStatusService
 
         return ApiResponse<List<ActivityDto>>.Ok(data, "Success");
     }
+
+    public async Task<ApiResponse<List<StatusTimelineDto>>> GetLatestProductTimelineAsync(StatusFilter filter)
+    {
+        var (start, end) = DateFilterHelper.Normalize(filter.StartDate, filter.EndDate);
+        filter.StartDate = start;
+        filter.EndDate = end;
+
+        var statuses = await _repository.GetLatestProductStatusesAsync(filter);
+
+        var today = DateTime.Now.Date;
+        var isToday = (filter.StartDate == null || filter.StartDate.Value.Date <= today) &&
+                      (filter.EndDate == null || filter.EndDate.Value.Date >= today);
+
+        var data = statuses
+            .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
+            .Select(g =>
+            {
+                var latestStatus = g
+                    .OrderByDescending(s => s.Id)
+                    .FirstOrDefault();
+
+                var productions = g
+                    .GroupBy(s => new
+                    {
+                        UserName = s.Production.User.Name,
+                        ProductName = s.Production.Product?.PartName,
+                        s.Production.Product?.PartNo,
+                        Quantity = s.Production.ActualQty,
+                        s.Production.CreatedAt,
+                        s.Production.UpdatedAt,
+                    })
+                    .Select(pg =>
+                    {
+                        var timeline = pg.Select(s => new SimpleTimelineDto(
+                            s.CreatedAt,
+                            s.UpdatedAt,
+                            s.Code,
+                            s.Code == 2
+                                ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
+                                : "",
+                            s.Qty
+                        )).ToList();
+
+                        return new ProductionTimelineDto(
+                            pg.Key.UserName,
+                            pg.Key.ProductName,
+                            pg.Key.PartNo,
+                            pg.Key.Quantity,
+                            pg.Key.CreatedAt,
+                            pg.Key.UpdatedAt,
+                            timeline
+                        );
+                    })
+                    .ToList();
+
+                if (isToday && latestStatus != null)
+                {
+                    foreach (var prod in productions)
+                    {
+                        for (int i = 0; i < prod.Timeline.Count; i++)
+                        {
+                            var t = prod.Timeline[i];
+                            if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
+                            {
+                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status, t.Message, t.Counter);
+                                goto done;
+                            }
+                        }
+                    }
+                }
+            done:
+
+                return new StatusTimelineDto(
+                    g.Key.MachineId,
+                    g.Key.MachineName,
+                    productions
+                );
+            })
+            .ToList();
+
+        return ApiResponse<List<StatusTimelineDto>>.Ok(data, "Success");
+    }
 }
