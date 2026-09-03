@@ -19,16 +19,28 @@ public class UserService : IUserService
     {
         var (users, totalCount) = await _repository.GetAllAsync(filter);
 
-        var data = users.Select(x => new UserDto(
-            x.Id,
-            x.Name,
-            x.Email,
-            x.Username,
-            x.Role,
-            x.Group?.Name,
-            x.Machine?.Name,
-            x.CreatedAt
-        )).ToList();
+        var data = users.Select(x => MapToDto(x)).ToList();
+
+        PaginationMetadata? pagination = null;
+        if (filter.Paginate == true)
+        {
+            pagination = new PaginationMetadata
+            {
+                Page = filter.Page,
+                Limit = filter.Limit,
+                Total = totalCount,
+                TotalPages = filter.Limit > 0 ? (int)Math.Ceiling((double)totalCount / filter.Limit) : 0
+            };
+        }
+
+        return ApiPagedResponse<List<UserDto>>.Ok(data, "Success", pagination);
+    }
+
+    public async Task<ApiPagedResponse<List<UserDto>>> GetAllDeletedAsync(UserFilter filter)
+    {
+        var (users, totalCount) = await _repository.GetAllDeletedAsync(filter);
+
+        var data = users.Select(x => MapToDto(x)).ToList();
 
         PaginationMetadata? pagination = null;
         if (filter.Paginate == true)
@@ -52,18 +64,7 @@ public class UserService : IUserService
         if (user == null)
             return ApiResponse<UserDto>.Error("User not found");
 
-        var data = new UserDto(
-            user.Id,
-            user.Name,
-            user.Email,
-            user.Username,
-            user.Role,
-            user.Group?.Name,
-            user.Machine?.Name,
-            user.CreatedAt
-        );
-
-        return ApiResponse<UserDto>.Ok(data);
+        return ApiResponse<UserDto>.Ok(MapToDto(user));
     }
 
     public async Task<ApiResponse<UserDto>> CreateAsync(CreateUserDto createUserDto)
@@ -127,18 +128,7 @@ public class UserService : IUserService
             return ApiResponse<UserDto>.Error("Failed to retrieve created user");
         }
 
-        var dto = new UserDto(
-            createdUser.Id,
-            createdUser.Name,
-            createdUser.Email,
-            createdUser.Username,
-            createdUser.Role,
-            createdUser.Group?.Name,
-            createdUser.Machine?.Name,
-            createdUser.CreatedAt
-        );
-
-        return ApiResponse<UserDto>.Ok(dto, "User created successfully");
+        return ApiResponse<UserDto>.Ok(MapToDto(createdUser), "User created successfully");
     }
 
     public async Task<ApiResponse<UserDto>> UpdateAsync(int id, UpdateUserDto updateUserDto)
@@ -158,8 +148,8 @@ public class UserService : IUserService
 
         if (!string.IsNullOrWhiteSpace(updateUserDto.Username))
         {
-            var existingUserWithUsername = await _repository.UsernameExistsAsync(updateUserDto.Username);
-            if (existingUserWithUsername && user.Username?.ToLower() != updateUserDto.Username.ToLower())
+            var existingUserWithUsername = await _repository.UsernameExistsAsync(updateUserDto.Username, id);
+            if (existingUserWithUsername)
             {
                 errors.Add("Username", new[] { "Username already exists." });
             }
@@ -204,18 +194,7 @@ public class UserService : IUserService
             return ApiResponse<UserDto>.Error("Failed to retrieve updated user");
         }
 
-        var dto = new UserDto(
-            updatedUser.Id,
-            updatedUser.Name,
-            updatedUser.Email,
-            updatedUser.Username,
-            updatedUser.Role,
-            updatedUser.Group?.Name,
-            updatedUser.Machine?.Name,
-            updatedUser.CreatedAt
-        );
-
-        return ApiResponse<UserDto>.Ok(dto, "User updated successfully");
+        return ApiResponse<UserDto>.Ok(MapToDto(updatedUser), "User updated successfully");
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id)
@@ -230,4 +209,27 @@ public class UserService : IUserService
 
         return ApiResponse<object>.Ok(true, "User deleted successfully");
     }
+
+    public async Task<ApiResponse<object>> RestoreAsync(int id)
+    {
+        var user = await _repository.GetDeletedByIdAsync(id);
+        if (user == null)
+            return ApiResponse<object>.Error("Deleted user not found");
+
+        await _repository.RestoreAsync(user);
+
+        return ApiResponse<object>.Ok(true, "User restored successfully");
+    }
+
+    private static UserDto MapToDto(KcfMonitoringSystem.Domain.Entities.User u) => new(
+        u.Id,
+        u.Name,
+        u.Email,
+        u.Username,
+        u.Role,
+        u.Group?.Name,
+        u.Machine?.Name,
+        u.CreatedAt,
+        u.DeletedAt
+    );
 }

@@ -45,6 +45,34 @@ public class UserRepository : IUserRepository
         return (data, totalCount);
     }
 
+    public async Task<(List<User> Data, int TotalCount)> GetAllDeletedAsync(UserFilter filter)
+    {
+        var query = _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.IsDeleted)
+            .Include(u => u.Group)
+            .Include(u => u.Machine)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.ToLower();
+            query = query.Where(x => x.Name.ToLower().Contains(search) ||
+                                     (x.Email != null && x.Email.ToLower().Contains(search)) ||
+                                     (x.Username != null && x.Username.ToLower().Contains(search)));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        query = query.OrderByDescending(x => x.DeletedAt);
+
+        if (filter.Paginate == true)
+            query = query.Skip((filter.Page - 1) * filter.Limit).Take(filter.Limit);
+
+        var data = await query.ToListAsync();
+        return (data, totalCount);
+    }
+
     public async Task<User?> GetByIdAsync(int id)
     {
         return await _db.Users
@@ -67,7 +95,27 @@ public class UserRepository : IUserRepository
 
     public async Task DeleteAsync(User user)
     {
-        _db.Users.Remove(user);
+        user.IsDeleted = true;
+        user.DeletedAt = DateTime.UtcNow;
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<User?> GetDeletedByIdAsync(int id)
+    {
+        return await _db.Users
+            .IgnoreQueryFilters()
+            .Include(u => u.Group)
+            .Include(u => u.Machine)
+            .FirstOrDefaultAsync(x => x.Id == id && x.IsDeleted);
+    }
+
+    public async Task RestoreAsync(User user)
+    {
+        user.IsDeleted = false;
+        user.DeletedAt = null;
+        user.UpdatedAt = DateTime.UtcNow;
+        _db.Users.Update(user);
         await _db.SaveChangesAsync();
     }
 
@@ -81,8 +129,11 @@ public class UserRepository : IUserRepository
         return await _db.Machines.AnyAsync(m => m.Id == machineId);
     }
 
-    public async Task<bool> UsernameExistsAsync(string username)
+    public async Task<bool> UsernameExistsAsync(string username, int? excludeId = null)
     {
-        return await _db.Users.AnyAsync(u => u.Username != null && u.Username.ToLower() == username.ToLower());
+        return await _db.Users.AnyAsync(u =>
+            u.Username != null &&
+            u.Username.ToLower() == username.ToLower() &&
+            (excludeId == null || u.Id != excludeId));
     }
 }

@@ -19,6 +19,13 @@ public static class UserEndpoints
             return Results.Ok(response);
         }).Produces<ApiPagedResponse<List<UserDto>>>();
 
+        group.MapGet("/deleted", async (IUserService userService, [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? search = null, [FromQuery] bool paginate = true) =>
+        {
+            var filter = new UserFilter { Page = page, Limit = limit, Search = search, Paginate = paginate };
+            var response = await userService.GetAllDeletedAsync(filter);
+            return Results.Ok(response);
+        }).Produces<ApiPagedResponse<List<UserDto>>>();
+
         group.MapGet("/{id}", async (int id, IUserService userService) =>
         {
             var response = await userService.GetByIdAsync(id);
@@ -52,6 +59,16 @@ public static class UserEndpoints
         group.MapDelete("/{id}", async (int id, IUserService userService) =>
         {
             var response = await userService.DeleteAsync(id);
+            if (!response.Status)
+                return Results.NotFound(ApiErrorResponse.Create(response.Message));
+
+            return Results.Ok(response);
+        }).Produces<ApiResponse<object>>()
+          .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapPatch("/{id}/restore", async (int id, IUserService userService) =>
+        {
+            var response = await userService.RestoreAsync(id);
             if (!response.Status)
                 return Results.NotFound(ApiErrorResponse.Create(response.Message));
 

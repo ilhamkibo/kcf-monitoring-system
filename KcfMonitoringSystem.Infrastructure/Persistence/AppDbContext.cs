@@ -22,6 +22,9 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Soft Delete filter for User
+        modelBuilder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
+
         // User → Group (Many-to-One)
         modelBuilder.Entity<User>()
             .HasOne(u => u.Group)

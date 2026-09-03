@@ -10,7 +10,8 @@ public record UserDto(
     string? Role,
     string? GroupName,
     string? MachineName,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    DateTime? DeletedAt = null
 );
 
 public record CreateUserDto(
