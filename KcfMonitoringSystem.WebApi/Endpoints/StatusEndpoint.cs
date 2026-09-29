@@ -135,6 +135,5 @@ public static class StatusEndpoints
             return Results.Ok(response);
         }).Produces<ApiResponse<List<ActivityDto>>>();
 
-
     }
 }

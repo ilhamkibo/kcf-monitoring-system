@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.5" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.4.12" />
@@ -15,6 +16,12 @@
   <ItemGroup>
     <ProjectReference Include="..\KcfMonitoringSystem.Application\KcfMonitoringSystem.Application.csproj" />
     <ProjectReference Include="..\KcfMonitoringSystem.Infrastructure\KcfMonitoringSystem.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Templates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

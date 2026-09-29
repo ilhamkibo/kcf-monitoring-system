@@ -67,6 +67,9 @@ try
     builder.Services.AddScoped<IGroupService, GroupService>();
     builder.Services.AddScoped<IAlarmHistoryRepository, AlarmHistoryRepository>();
     builder.Services.AddScoped<IAlarmHistoryService, AlarmHistoryService>();
+    builder.Services.AddScoped<IReportRepository, ReportRepository>();
+    builder.Services.AddScoped<IReportService, ReportService>();
+    builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
 
     var app = builder.Build();
 
@@ -157,6 +160,7 @@ try
     app.MapMachineEndpoints();
     app.MapGroupEndpoints();
     app.MapAlarmHistoryEndpoints();
+    app.MapReportEndpoints();
 
     app.Run();
 }

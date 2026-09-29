@@ -50,4 +50,4 @@ public record ActivityDetailDto(
     string Product,
     int TotalTime,
     int Code
-);
+);
