@@ -215,7 +215,8 @@ public class ReportService : IReportService
             var timesDto = new ProductionRecordTimesDto(dandoriMinutes, runningMinutes);
 
             // long productQuantity = currentGroup.Sum(p => (long)(p.ActualQty > 0 ? p.ActualQty : p.Quantity));
-            long productQuantity = currentGroup.Sum(p => (long)p.ActualQty);
+            // long productQuantity = currentGroup.Sum(p => (long)p.ActualQty);
+            long productQuantity = currentGroup.Last().Quantity;
 
             double operatingRate = 0;
             if (runningMinutes > 0 && rpm > 0)
