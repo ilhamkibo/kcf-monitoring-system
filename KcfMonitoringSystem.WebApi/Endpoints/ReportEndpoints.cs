@@ -22,7 +22,6 @@ public static class ReportEndpoints
             IReportService reportService,
             [FromQuery] int? year = null,
             [FromQuery] int? machineId = null,
-            [FromQuery] int? productId = null,
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] bool paginate = true) =>
@@ -31,7 +30,6 @@ public static class ReportEndpoints
             {
                 Year = year,
                 MachineId = machineId,
-                ProductId = productId,
                 Page = page,
                 Limit = limit,
                 Paginate = paginate
@@ -45,8 +43,7 @@ public static class ReportEndpoints
             IReportService reportService,
             IExcelExportService excelService,
             [FromQuery] int? year = null,
-            [FromQuery] int? machineId = null,
-            [FromQuery] int? productId = null) =>
+            [FromQuery] int? machineId = null) =>
         {
             // Get dandori data
             var dandoriResponse = await reportService.GetDandoriSummaryAsync(year);
@@ -56,7 +53,6 @@ public static class ReportEndpoints
             {
                 Year = year,
                 MachineId = machineId,
-                ProductId = productId,
                 Paginate = false
             };
             var recordsResponse = await reportService.GetProductionRecordsAsync(recordsFilter);
@@ -75,4 +71,4 @@ public static class ReportEndpoints
                 fileName);
         }).Produces<FileResult>();
     }
-}
+}

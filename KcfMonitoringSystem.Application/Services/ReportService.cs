@@ -19,7 +19,55 @@ public class ReportService : IReportService
     public async Task<ApiResponse<DandoriSummaryDto>> GetDandoriSummaryAsync(int? year)
     {
         var targetYear = year ?? DateTime.Now.Year;
-        var (operators, statuses) = await _repository.GetDandoriDataAsync(targetYear);
+        var productions = await _repository.GetProductionRecordsDataAsync(targetYear);
+        var operators = await _repository.GetOperatorsAsync();
+
+        var existingOpIds = operators.Select(o => o.Id).ToHashSet();
+        foreach (var p in productions)
+        {
+            if (p.User != null && !existingOpIds.Contains(p.User.Id))
+            {
+                operators.Add(p.User);
+                existingOpIds.Add(p.User.Id);
+            }
+        }
+        operators = operators.OrderBy(o => o.Id).ToList();
+
+        var groups = GroupContiguousProductions(productions);
+
+        // Map operatorId -> month (1..12) -> list of dandori seconds per occurrence
+        var opMonthDandori = new Dictionary<int, Dictionary<int, List<double>>>();
+        foreach (var op in operators)
+        {
+            opMonthDandori[op.Id] = new Dictionary<int, List<double>>();
+            for (int m = 1; m <= 12; m++)
+            {
+                opMonthDandori[op.Id][m] = new List<double>();
+            }
+        }
+
+        foreach (var group in groups)
+        {
+            double dandoriSecs = CalculateStatusDurationSeconds(group.SelectMany(p => p.Statuses), 3);
+            if (dandoriSecs <= 0) continue;
+
+            int month = group[0].CreatedAt.Month;
+            if (month < 1 || month > 12) continue;
+
+            var groupOperators = group
+                .Select(p => p.User)
+                .Where(u => u != null)
+                .GroupBy(u => u.Id)
+                .Select(g => g.Key);
+
+            foreach (var opId in groupOperators)
+            {
+                if (opMonthDandori.TryGetValue(opId, out var monthDict))
+                {
+                    monthDict[month].Add(dandoriSecs);
+                }
+            }
+        }
 
         var operatorDtos = new List<DandoriOperatorDto>();
         var monthOperatorValues = new Dictionary<int, List<int>>();
@@ -27,29 +75,39 @@ public class ReportService : IReportService
 
         foreach (var op in operators)
         {
-            var opStatuses = statuses.Where(s => s.Production.UserId == op.Id).ToList();
             var monthVals = new int?[13];
+            var monthTotalVals = new int?[13];
+            var monthCountVals = new int?[13];
             var nonNullValues = new List<int>();
 
             for (int m = 1; m <= 12; m++)
             {
-                var mStatuses = opStatuses.Where(s => s.CreatedAt.Month == m).ToList();
-                if (mStatuses.Count > 0)
+                var dandoriList = opMonthDandori[op.Id][m];
+                if (dandoriList.Count > 0)
                 {
-                    double totalDurationSeconds = mStatuses.Sum(s => s.Duration > 0
-                        ? (double)s.Duration
-                        : (s.UpdatedAt.HasValue ? (s.UpdatedAt.Value - s.CreatedAt).TotalSeconds : 0));
+                    // === DEBUG & DETAIL DATA ===
+                    int totalMinutes = (int)Math.Round(dandoriList.Sum() / 60.0, MidpointRounding.AwayFromZero);
+                    int count = dandoriList.Count;
 
-                    // Convert seconds in DB to minutes (divided by 60)
-                    int durationMinutes = (int)Math.Round(totalDurationSeconds / 60.0, MidpointRounding.AwayFromZero);
+                    // Opsi 1: Rata-rata dari total detik / count / 60
+                    double avgMinutes = (dandoriList.Sum() / count) / 60.0;
+                    int roundedAvg = (int)Math.Round(avgMinutes, MidpointRounding.AwayFromZero);
 
-                    monthVals[m] = durationMinutes;
-                    nonNullValues.Add(durationMinutes);
-                    monthOperatorValues[m].Add(durationMinutes);
+                    // Opsi 2 (jika ingin rata-rata langsung dari totalMinutes / count):
+                    // int roundedAvg = (int)Math.Round((double)totalMinutes / count, MidpointRounding.AwayFromZero);
+
+                    monthVals[m] = roundedAvg;
+                    monthTotalVals[m] = totalMinutes;
+                    monthCountVals[m] = count;
+
+                    nonNullValues.Add(roundedAvg);
+                    monthOperatorValues[m].Add(roundedAvg);
                 }
                 else
                 {
                     monthVals[m] = null;
+                    monthTotalVals[m] = null;
+                    monthCountVals[m] = null;
                 }
             }
 
@@ -63,7 +121,19 @@ public class ReportService : IReportService
                 monthVals[9], monthVals[10], monthVals[11], monthVals[12]
             );
 
-            operatorDtos.Add(new DandoriOperatorDto(op.Id, op.Name, monthsDto, opAvg));
+            var totalMonthsDto = new DandoriMonthsDto(
+                monthTotalVals[1], monthTotalVals[2], monthTotalVals[3], monthTotalVals[4],
+                monthTotalVals[5], monthTotalVals[6], monthTotalVals[7], monthTotalVals[8],
+                monthTotalVals[9], monthTotalVals[10], monthTotalVals[11], monthTotalVals[12]
+            );
+
+            var countMonthsDto = new DandoriMonthsDto(
+                monthCountVals[1], monthCountVals[2], monthCountVals[3], monthCountVals[4],
+                monthCountVals[5], monthCountVals[6], monthCountVals[7], monthCountVals[8],
+                monthCountVals[9], monthCountVals[10], monthCountVals[11], monthCountVals[12]
+            );
+
+            operatorDtos.Add(new DandoriOperatorDto(op.Id, op.Name, monthsDto, opAvg, totalMonthsDto, countMonthsDto));
         }
 
         var rootMonthAvgs = new int?[13];
@@ -101,7 +171,7 @@ public class ReportService : IReportService
     public async Task<ApiPagedResponse<List<ProductionRecordDto>>> GetProductionRecordsAsync(ProductionRecordFilter filter)
     {
         var targetYear = filter.Year ?? DateTime.Now.Year;
-        var productions = await _repository.GetProductionRecordsDataAsync(targetYear, filter.MachineId, filter.ProductId);
+        var productions = await _repository.GetProductionRecordsDataAsync(targetYear, filter.MachineId);
 
         var result = new List<ProductionRecordDto>();
         if (productions.Count == 0)
@@ -112,23 +182,10 @@ public class ReportService : IReportService
             return ApiPagedResponse<List<ProductionRecordDto>>.Ok(result, "Success", emptyPagination);
         }
 
-        // Group contiguous productions by MachineId and ProductId
-        int i = 0;
-        while (i < productions.Count)
+        var groups = GroupContiguousProductions(productions);
+        foreach (var currentGroup in groups)
         {
-            var first = productions[i];
-            var currentGroup = new List<Production> { first };
-
-            int j = i + 1;
-            while (j < productions.Count &&
-                   productions[j].MachineId == first.MachineId &&
-                   productions[j].ProductId == first.ProductId)
-            {
-                currentGroup.Add(productions[j]);
-                j++;
-            }
-            i = j;
-
+            var first = currentGroup[0];
             var dateStr = first.CreatedAt.ToString("yyyy-MM-dd");
             var machineDto = new ProductionRecordMachineDto(first.Machine.Id, first.Machine.Name);
 
@@ -149,13 +206,8 @@ public class ReportService : IReportService
 
             var allStatuses = currentGroup.SelectMany(p => p.Statuses).ToList();
 
-            double dandoriSecs = allStatuses
-                .Where(s => s.Code == 3)
-                .Sum(s => s.Duration > 0 ? (double)s.Duration : (s.UpdatedAt.HasValue ? (s.UpdatedAt.Value - s.CreatedAt).TotalSeconds : 0));
-
-            double runningSecs = allStatuses
-                .Where(s => s.Code == 1)
-                .Sum(s => s.Duration > 0 ? (double)s.Duration : (s.UpdatedAt.HasValue ? (s.UpdatedAt.Value - s.CreatedAt).TotalSeconds : 0));
+            double dandoriSecs = CalculateStatusDurationSeconds(allStatuses, 3);
+            double runningSecs = CalculateStatusDurationSeconds(allStatuses, 1, 2, 4);
 
             int dandoriMinutes = (int)Math.Round(dandoriSecs / 60.0, MidpointRounding.AwayFromZero);
             int runningMinutes = (int)Math.Round(runningSecs / 60.0, MidpointRounding.AwayFromZero);
@@ -205,6 +257,38 @@ public class ReportService : IReportService
         }
 
         return ApiPagedResponse<List<ProductionRecordDto>>.Ok(pagedResult, "Success", pagination);
+    }
+
+    private static List<List<Production>> GroupContiguousProductions(List<Production> productions)
+    {
+        var groups = new List<List<Production>>();
+        int i = 0;
+        while (i < productions.Count)
+        {
+            var first = productions[i];
+            var currentGroup = new List<Production> { first };
+
+            int j = i + 1;
+            while (j < productions.Count &&
+                   productions[j].MachineId == first.MachineId &&
+                   productions[j].ProductId == first.ProductId)
+            {
+                currentGroup.Add(productions[j]);
+                j++;
+            }
+            groups.Add(currentGroup);
+            i = j;
+        }
+        return groups;
+    }
+
+    private static double CalculateStatusDurationSeconds(IEnumerable<Status> statuses, params int[] codes)
+    {
+        return statuses
+            .Where(s => codes.Contains(s.Code))
+            .Sum(s => s.Duration > 0
+                ? (double)s.Duration
+                : (s.UpdatedAt.HasValue ? (s.UpdatedAt.Value - s.CreatedAt).TotalSeconds : 0));
     }
 }
 

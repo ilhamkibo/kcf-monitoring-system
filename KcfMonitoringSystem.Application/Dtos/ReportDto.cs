@@ -19,7 +19,9 @@ public record DandoriOperatorDto(
     int Id,
     string Name,
     DandoriMonthsDto Months,
-    int? Average
+    int? Average,
+    DandoriMonthsDto? Total = null,
+    DandoriMonthsDto? Count = null
 );
 
 public record DandoriAverageDto(
