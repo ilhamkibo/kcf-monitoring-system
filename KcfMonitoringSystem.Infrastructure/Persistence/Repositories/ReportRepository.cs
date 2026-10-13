@@ -42,7 +42,7 @@ public class ReportRepository : IReportRepository
 
         return await query
             .OrderBy(p => p.MachineId)
-            .ThenBy(p => p.Id)
+            .ThenBy(p => p.CreatedAt)
             .ToListAsync();
     }
 }
