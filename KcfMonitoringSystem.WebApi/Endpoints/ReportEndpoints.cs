@@ -42,37 +42,37 @@ public static class ReportEndpoints
         }).Produces<ApiPagedResponse<List<ProductionRecordDto>>>();
 
         // Export Excel endpoint
-        group.MapGet("/export", async (
-            IReportService reportService,
-            IExcelExportService excelService,
-            [FromQuery] int? year = null,
-            [FromQuery] int? machineId = null) =>
-        {
-            // Get dandori data
-            var dandoriResponse = await reportService.GetDandoriSummaryAsync(year);
+        // group.MapGet("/export", async (
+        //     IReportService reportService,
+        //     IExcelExportService excelService,
+        //     [FromQuery] int? year = null,
+        //     [FromQuery] int? machineId = null) =>
+        // {
+        //     // Get dandori data
+        //     var dandoriResponse = await reportService.GetDandoriSummaryAsync(year);
 
-            // Get all production records (no pagination for export)
-            var recordsFilter = new ProductionRecordFilter
-            {
-                Year = year,
-                MachineId = machineId,
-                Paginate = false
-            };
-            var recordsResponse = await reportService.GetProductionRecordsAsync(recordsFilter);
+        //     // Get all production records (no pagination for export)
+        //     var recordsFilter = new ProductionRecordFilter
+        //     {
+        //         Year = year,
+        //         MachineId = machineId,
+        //         Paginate = false
+        //     };
+        //     var recordsResponse = await reportService.GetProductionRecordsAsync(recordsFilter);
 
-            // Generate Excel
-            var fileBytes = excelService.GenerateReport(
-                dandoriResponse.Data,
-                recordsResponse.Data,
-                year);
+        //     // Generate Excel
+        //     var fileBytes = excelService.GenerateReport(
+        //         dandoriResponse.Data,
+        //         recordsResponse.Data,
+        //         year);
 
-            var fileName = $"KCF_Report_{year ?? DateTime.Now.Year}.xlsx";
+        //     var fileName = $"KCF_Report_{year ?? DateTime.Now.Year}.xlsx";
 
-            return Results.File(
-                fileBytes,
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                fileName);
-        }).Produces<FileResult>();
+        //     return Results.File(
+        //         fileBytes,
+        //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        //         fileName);
+        // }).Produces<FileResult>();
     }
 
     private static readonly JsonSerializerOptions ProductionRecordJsonSerializerOptions = CreateProductionRecordJsonSerializerOptions();
