@@ -221,8 +221,8 @@ public class ReportService : IReportService
             double operatingRate = 0;
             if (runningMinutes > 0 && rpm > 0)
             {
-                operatingRate = Math.Round(((double)productQuantity / (rpm * runningMinutes)), 2);
-                // operatingRate = Math.Round(((double)productQuantity / (rpm * runningMinutes)) * 100.0, 2);
+                operatingRate = Math.Round(((double)productQuantity / (rpm * runningMinutes)), 4);
+                // operatingRate = Math.Round(((double)productQuantity / (rpm * runningMinutes)) * 100.0, 4);
             }
 
             result.Add(new ProductionRecordDto(

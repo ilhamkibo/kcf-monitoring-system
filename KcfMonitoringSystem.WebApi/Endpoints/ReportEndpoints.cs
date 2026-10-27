@@ -1,5 +1,8 @@
 
 
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using KcfMonitoringSystem.Application.Common;
 using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
@@ -35,7 +38,7 @@ public static class ReportEndpoints
                 Paginate = paginate
             };
             var response = await reportService.GetProductionRecordsAsync(filter);
-            return Results.Ok(response);
+            return Results.Json(response, ProductionRecordJsonSerializerOptions);
         }).Produces<ApiPagedResponse<List<ProductionRecordDto>>>();
 
         // Export Excel endpoint
@@ -70,5 +73,28 @@ public static class ReportEndpoints
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName);
         }).Produces<FileResult>();
+    }
+
+    private static readonly JsonSerializerOptions ProductionRecordJsonSerializerOptions = CreateProductionRecordJsonSerializerOptions();
+
+    private static JsonSerializerOptions CreateProductionRecordJsonSerializerOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new FourDecimalDoubleJsonConverter());
+
+        return options;
+    }
+
+    private sealed class FourDecimalDoubleJsonConverter : JsonConverter<double>
+    {
+        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return reader.GetDouble();
+        }
+
+        public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options)
+        {
+            writer.WriteRawValue(value.ToString("F4", CultureInfo.InvariantCulture));
+        }
     }
 }

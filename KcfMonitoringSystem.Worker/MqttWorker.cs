@@ -290,18 +290,35 @@ public class MqttWorker : BackgroundService
         // Always save production first so it has an Id for the status FK
         await db.SaveChangesAsync();
 
-        bool statusChanged = await ProcessStatusAsync(db, machineId.Value, message.Machine.Qty, message.Machine.Status, timestamp, latestProduction.Id);
+        var (statusChanged, latestStatus) = await ProcessStatusAsync(
+            db,
+            machineId.Value,
+            message.Machine.Qty,
+            message.Machine.Status,
+            timestamp,
+            latestProduction.Id);
 
         await db.SaveChangesAsync();
 
-        if (statusChanged || productionChanged)
-        {
-            _logger.LogInformation("Data updated for [{Topic}]. Status Changed: {StatusChanged}, Production Changed: {ProductionChanged}", topic, statusChanged, productionChanged);
-        }
-        else
-        {
-            _logger.LogDebug("Successfully processed machine data for [{Topic}] (No state changes)", topic);
-        }
+        _logger.LogInformation(
+            "Data saved for [{Topic}]. Production: Id={ProductionId}, MachineId={MachineId}, UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}, ActualQty={ActualQty}, CreatedAt={ProductionCreatedAt}, UpdatedAt={ProductionUpdatedAt}; Status: Id={StatusId}, Code={StatusCode}, Qty={StatusQty}, Duration={StatusDuration}, CreatedAt={StatusCreatedAt}, UpdatedAt={StatusUpdatedAt}; Production Changed={ProductionChanged}, Status Changed={StatusChanged}",
+            topic,
+            latestProduction.Id,
+            latestProduction.MachineId,
+            latestProduction.UserId,
+            latestProduction.ProductId,
+            latestProduction.Quantity,
+            latestProduction.ActualQty,
+            latestProduction.CreatedAt,
+            latestProduction.UpdatedAt,
+            latestStatus.Id,
+            latestStatus.Code,
+            latestStatus.Qty,
+            latestStatus.Duration,
+            latestStatus.CreatedAt,
+            latestStatus.UpdatedAt,
+            productionChanged,
+            statusChanged);
     }
 
     private async Task<int?> GetMachineIdAsync(AppDbContext db, string machineName, string topic)
@@ -423,7 +440,13 @@ public class MqttWorker : BackgroundService
         return newTestingProduct.Id;
     }
 
-    private async Task<bool> ProcessStatusAsync(AppDbContext db, int machineId, int qty, int statusCode, DateTime timestamp, int productionId)
+    private async Task<(bool Changed, Status Status)> ProcessStatusAsync(
+        AppDbContext db,
+        int machineId,
+        int qty,
+        int statusCode,
+        DateTime timestamp,
+        int productionId)
     {
         bool isFirstMessageSinceStartup = _initializedMachines.TryAdd(machineId, true);
 
@@ -443,7 +466,7 @@ public class MqttWorker : BackgroundService
             lastStatus.Code != statusCode ||
             lastStatus.ProductionId != productionId)
         {
-            db.Statuses.Add(new Status
+            var newStatus = new Status
             {
                 MachineId = machineId,
                 Code = statusCode,
@@ -452,8 +475,9 @@ public class MqttWorker : BackgroundService
                 UpdatedAt = timestamp,
                 Duration = 0,
                 Qty = qty
-            });
-            return true; // New status or session started
+            };
+            db.Statuses.Add(newStatus);
+            return (true, newStatus); // New status or session started
         }
 
         // Continuous update within the same session
@@ -461,7 +485,7 @@ public class MqttWorker : BackgroundService
         lastStatus.Duration = (int)(timestamp - lastStatus.CreatedAt).TotalSeconds;
         lastStatus.Qty = qty;
         db.Statuses.Update(lastStatus);
-        return false; // Status didn't change
+        return (false, lastStatus); // Status didn't change
     }
 
     private async Task<int?> FindMatchingStatusIdAsync(AppDbContext db, int machineId, DateTime alarmTimestamp)

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using KcfMonitoringSystem.Application.Common;
 using KcfMonitoringSystem.Application.Dtos;
 using KcfMonitoringSystem.Application.Filters;
@@ -77,7 +78,12 @@ public class ReportEndpointsTests : IClassFixture<EndpointTestsBase>
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-        var content = await result.Content.ReadFromJsonAsync<ApiPagedResponse<List<ProductionRecordDto>>>();
+        var responseJson = await result.Content.ReadAsStringAsync();
+        Assert.Contains("\"operatingRate\":67.4400", responseJson);
+
+        var content = JsonSerializer.Deserialize<ApiPagedResponse<List<ProductionRecordDto>>>(
+            responseJson,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.NotNull(content);
         Assert.True(content.Status);
         Assert.Single(content.Data!);
