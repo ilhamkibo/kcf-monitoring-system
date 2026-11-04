@@ -96,7 +96,8 @@ public class StatusService : IStatusService
                             s.Code == 2
                                 ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
                                 : "",
-                            s.Qty
+                            s.Qty,
+                            s.Duration
                         )).ToList();
 
                         return new ProductionTimelineDto(

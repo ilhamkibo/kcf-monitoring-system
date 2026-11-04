@@ -37,7 +37,8 @@ public record SimpleTimelineDto(
     DateTime? End,
     int Status,
     string? Message = null,
-    int Counter = 0
+    int Counter = 0,
+    int Duration = 0
 );
 
 public record ActivityDto(
@@ -50,4 +51,4 @@ public record ActivityDetailDto(
     string Product,
     int TotalTime,
     int Code
-);
+);
