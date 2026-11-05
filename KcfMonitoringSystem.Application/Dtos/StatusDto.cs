@@ -38,7 +38,7 @@ public record SimpleTimelineDto(
     int Status,
     string? Message = null,
     int Counter = 0,
-    int Duration = 0
+    double Duration = 0
 );
 
 public record ActivityDto(

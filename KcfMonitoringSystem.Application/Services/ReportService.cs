@@ -287,9 +287,7 @@ public class ReportService : IReportService
     {
         return statuses
             .Where(s => codes.Contains(s.Code))
-            .Sum(s => s.Duration > 0
-                ? (double)s.Duration
-                : (s.UpdatedAt.HasValue ? (s.UpdatedAt.Value - s.CreatedAt).TotalSeconds : 0));
+            .Sum(s => s.Duration > 0 ? (double)s.Duration : (s.UpdatedAt.HasValue ? (s.UpdatedAt.Value - s.CreatedAt).TotalSeconds : 0));
     }
 }
 
