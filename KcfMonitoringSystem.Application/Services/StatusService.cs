@@ -123,7 +123,14 @@ public class StatusService : IStatusService
                             var t = prod.Timeline[i];
                             if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
                             {
-                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status, t.Message, t.Counter);
+                                prod.Timeline[i] = new SimpleTimelineDto(
+                                    t.Start,
+                                    null,
+                                    t.Status,
+                                    t.Message,
+                                    t.Counter,
+                                    t.Duration
+                                );
                                 goto done;
                             }
                         }
@@ -209,7 +216,8 @@ public class StatusService : IStatusService
                             s.Code == 2
                                 ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
                                 : "",
-                            s.Qty
+                            s.Qty,
+                            s.Duration
                         )).ToList();
 
                         return new ProductionTimelineDto(
@@ -233,7 +241,14 @@ public class StatusService : IStatusService
                             var t = prod.Timeline[i];
                             if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
                             {
-                                prod.Timeline[i] = new SimpleTimelineDto(t.Start, null, t.Status, t.Message, t.Counter);
+                                prod.Timeline[i] = new SimpleTimelineDto(
+                                    t.Start,
+                                    null,
+                                    t.Status,
+                                    t.Message,
+                                    t.Counter,
+                                    t.Duration
+                                );
                                 goto done;
                             }
                         }
