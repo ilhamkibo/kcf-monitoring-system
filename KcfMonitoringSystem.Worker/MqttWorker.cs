@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Protocol;
+using KcfMonitoringSystem.Application.Common;
 using KcfMonitoringSystem.Domain.Entities;
 
 namespace KcfMonitoringSystem.Worker;
@@ -300,8 +301,20 @@ public class MqttWorker : BackgroundService
 
         await db.SaveChangesAsync();
 
+        var maintenanceChanged = await ProcessMaintenanceAsync(
+            db,
+            latestStatus,
+            message.Machine.MaintenanceOperator,
+            message.Machine.Reason,
+            timestamp);
+
+        if (maintenanceChanged)
+        {
+            await db.SaveChangesAsync();
+        }
+
         _logger.LogInformation(
-            "Data saved for [{Topic}]. Production: Id={ProductionId}, MachineId={MachineId}, UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}, ActualQty={ActualQty}, CreatedAt={ProductionCreatedAt}, UpdatedAt={ProductionUpdatedAt}; Status: Id={StatusId}, Code={StatusCode}, Qty={StatusQty}, Duration={StatusDuration}, CreatedAt={StatusCreatedAt}, UpdatedAt={StatusUpdatedAt}; Production Changed={ProductionChanged}, Status Changed={StatusChanged}",
+            "Data saved for [{Topic}]. Production: Id={ProductionId}, MachineId={MachineId}, UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}, ActualQty={ActualQty}, CreatedAt={ProductionCreatedAt}, UpdatedAt={ProductionUpdatedAt}; Status: Id={StatusId}, Code={StatusCode}, Qty={StatusQty}, Duration={StatusDuration}, CreatedAt={StatusCreatedAt}, UpdatedAt={StatusUpdatedAt}; Production Changed={ProductionChanged}, Status Changed={StatusChanged}, Maintenance Changed={MaintenanceChanged}",
             topic,
             latestProduction.Id,
             latestProduction.MachineId,
@@ -318,7 +331,8 @@ public class MqttWorker : BackgroundService
             latestStatus.CreatedAt,
             latestStatus.UpdatedAt,
             productionChanged,
-            statusChanged);
+            statusChanged,
+            maintenanceChanged);
     }
 
     private async Task<int?> GetMachineIdAsync(AppDbContext db, string machineName, string topic)
@@ -357,21 +371,9 @@ public class MqttWorker : BackgroundService
             operatorName = "testing";
         }
 
-        // 1. Exact match (case-insensitive)
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Name.ToLower() == operatorName.ToLower());
-        if (user != null)
-        {
-            return user.Id;
-        }
-
-        // 2. Partial match (DB name contains MQTT name OR MQTT name contains DB name)
-        user = await db.Users.FirstOrDefaultAsync(u =>
-            u.Name.ToLower().Contains(operatorName.ToLower()) ||
-            operatorName.ToLower().Contains(u.Name.ToLower()));
-        if (user != null)
-        {
-            return user.Id;
-        }
+        var userId = await FindUserIdAsync(db, operatorName);
+        if (userId.HasValue)
+            return userId.Value;
 
         // If the specified user wasn't found, try to look up the default "testing" user
         if (operatorName.ToLower() != "testing")
@@ -394,6 +396,24 @@ public class MqttWorker : BackgroundService
         db.Users.Add(newTestingUser);
         await db.SaveChangesAsync(); // save immediately to get Id
         return newTestingUser.Id;
+    }
+
+    private static async Task<int?> FindUserIdAsync(AppDbContext db, string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return null;
+
+        var normalizedName = userName.Trim().ToLower();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Name.ToLower() == normalizedName);
+
+        if (user == null)
+        {
+            user = await db.Users.FirstOrDefaultAsync(u =>
+                u.Name.ToLower().Contains(normalizedName) ||
+                normalizedName.Contains(u.Name.ToLower()));
+        }
+
+        return user?.Id;
     }
 
     private async Task<int> GetProductIdAsync(AppDbContext db, string productName)
@@ -443,7 +463,7 @@ public class MqttWorker : BackgroundService
     private async Task<(bool Changed, Status Status)> ProcessStatusAsync(
         AppDbContext db,
         int machineId,
-        int qty,
+        long qty,
         int statusCode,
         DateTime timestamp,
         int productionId)
@@ -488,6 +508,58 @@ public class MqttWorker : BackgroundService
         return (false, lastStatus); // Status didn't change
     }
 
+    private async Task<bool> ProcessMaintenanceAsync(
+        AppDbContext db,
+        Status status,
+        string? maintenanceOperatorName,
+        string? reason,
+        DateTime timestamp)
+    {
+        if (!MaintenanceStatusCodes.IsValid(status.Code) ||
+            string.IsNullOrWhiteSpace(maintenanceOperatorName) ||
+            string.IsNullOrWhiteSpace(reason))
+        {
+            return false;
+        }
+
+        var normalizedOperatorName = maintenanceOperatorName.Trim();
+        var normalizedReason = reason.Trim();
+        var maintenanceOperatorId = await FindUserIdAsync(db, normalizedOperatorName);
+
+        if (!maintenanceOperatorId.HasValue)
+        {
+            _logger.LogWarning(
+                "Maintenance operator '{MaintenanceOperatorName}' was not found for StatusId={StatusId}. Maintenance will be saved without an operator.",
+                normalizedOperatorName,
+                status.Id);
+        }
+
+        var maintenance = await db.Maintenances
+            .Where(m => m.StatusId == status.Id)
+            .OrderByDescending(m => m.Id)
+            .FirstOrDefaultAsync();
+
+        if (maintenance == null ||
+            maintenance.MaintenanceOperatorId != maintenanceOperatorId)
+        {
+            db.Maintenances.Add(new Maintenance
+            {
+                StatusId = status.Id,
+                MaintenanceOperatorId = maintenanceOperatorId,
+                Reason = normalizedReason,
+                CreatedAt = timestamp,
+                UpdatedAt = timestamp
+            });
+            return true;
+        }
+
+        maintenance.MaintenanceOperatorId = maintenanceOperatorId;
+        maintenance.Reason = normalizedReason;
+        maintenance.UpdatedAt = timestamp;
+        db.Maintenances.Update(maintenance);
+        return true;
+    }
+
     private async Task<int?> FindMatchingStatusIdAsync(AppDbContext db, int machineId, DateTime alarmTimestamp)
     {
         // Find the most recent Status for the same machine where:
@@ -515,7 +587,7 @@ public class MqttWorker : BackgroundService
         return candidateStatuses.First().Id;
     }
 
-    private async Task<(bool Changed, Production)> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, int qty, DateTime timestamp)
+    private async Task<(bool Changed, Production)> ProcessProductionAsync(AppDbContext db, int machineId, int userId, int productId, long qty, DateTime timestamp)
     {
         var lastProduction = await db.Productions
             .Where(p => p.MachineId == machineId)
@@ -543,7 +615,7 @@ public class MqttWorker : BackgroundService
         }
 
         // Calculate ActualQty for new production
-        int actualQty = (lastProduction != null && lastProduction.ProductId == productId)
+        long actualQty = (lastProduction != null && lastProduction.ProductId == productId)
             ? qty - lastProduction.Quantity   // same product: counter not reset, delta from previous
             : qty;                            // different product: counter reset, raw qty = actual
 

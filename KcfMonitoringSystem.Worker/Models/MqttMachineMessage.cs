@@ -11,12 +11,18 @@ public class MqttPayloadMachineData
     [JsonPropertyName("WORKNAME")]
     public string Work { get; set; } = string.Empty;
     [JsonPropertyName("PRODUCTCOUNTER")]
-    public int Qty { get; set; }
+    public long Qty { get; set; }
     [JsonPropertyName("STATUS")]
     public int Status { get; set; }
 
     [JsonPropertyName("TIMECOUNTER")]
     public uint TimeCounter { get; set; }
+
+    [JsonPropertyName("MAINTENANCE_OP")]
+    public string MaintenanceOperator { get; set; } = string.Empty;
+
+    [JsonPropertyName("REASON")]
+    public string Reason { get; set; } = string.Empty;
 }
 
 public class MqttMachineMessage

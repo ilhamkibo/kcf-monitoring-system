@@ -6,7 +6,7 @@ public class Status
     public int MachineId { get; set; }
     public int Code { get; set; }
     public int ProductionId { get; set; }
-    public int Qty { get; set; }
+    public long Qty { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -15,5 +15,6 @@ public class Status
     // Navigation
     public Machine Machine { get; set; } = null!;
     public Production Production { get; set; } = null!;
+    public ICollection<Maintenance> Maintenances { get; set; } = new List<Maintenance>();
     public ICollection<AlarmHistory> AlarmHistories { get; set; } = new List<AlarmHistory>();
 }

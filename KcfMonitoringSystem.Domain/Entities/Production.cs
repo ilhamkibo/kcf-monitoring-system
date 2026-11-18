@@ -6,8 +6,8 @@ public class Production
     public int MachineId { get; set; }
     public int UserId { get; set; }
     public int? ProductId { get; set; }
-    public int Quantity { get; set; }
-    public int ActualQty { get; set; }
+    public long Quantity { get; set; }
+    public long ActualQty { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

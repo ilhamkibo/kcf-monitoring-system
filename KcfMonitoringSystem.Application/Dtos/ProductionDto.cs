@@ -9,7 +9,7 @@ public record ProductionDto(
     int? ProductId,
     string? PartNo,
     string? PartName,
-    int Quantity,
+    long Quantity,
     DateTime CreatedAt,
     DateTime? UpdatedAt = null
 );

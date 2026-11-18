@@ -61,6 +61,8 @@ try
     builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddScoped<IStatusRepository, StatusRepository>();
     builder.Services.AddScoped<IStatusService, StatusService>();
+    builder.Services.AddScoped<IMaintenanceRepository, MaintenanceRepository>();
+    builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
     builder.Services.AddScoped<IMachineRepository, MachineRepository>();
     builder.Services.AddScoped<IMachineService, MachineService>();
     builder.Services.AddScoped<IGroupRepository, GroupRepository>();
@@ -157,6 +159,7 @@ try
     app.MapProductionEndpoints();
     app.MapProductEndpoints();
     app.MapStatusEndpoints();
+    app.MapMaintenanceEndpoints();
     app.MapMachineEndpoints();
     app.MapGroupEndpoints();
     app.MapAlarmHistoryEndpoints();

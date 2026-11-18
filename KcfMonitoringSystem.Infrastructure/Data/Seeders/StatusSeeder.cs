@@ -17,7 +17,7 @@ public static class StatusSeeder
 
         var now = DateTime.UtcNow;
         var statuses = new List<Status>();
-        var statusCodes = new[] { 1, 2, 3, 4, 5 }; // 1=Running, 2=Idle, 3=Error, 4=Maintenance, 5=Stop
+        var statusCodes = new[] { 1, 2, 3, 4, 5, 6 };
         var random = Random.Shared;
 
         for (int i = 0; i < 30; i++)

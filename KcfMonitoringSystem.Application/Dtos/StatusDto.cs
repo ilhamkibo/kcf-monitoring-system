@@ -13,7 +13,7 @@ public record StatusDto(
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     int Duration,
-    int Qty
+    long Qty
 );
 
 public record StatusTimelineDto(
@@ -26,7 +26,7 @@ public record ProductionTimelineDto(
     string User,
     string? ProductName,
     string? PartNo,
-    int Quantity,
+    long Quantity,
     DateTime Start,
     DateTime? End,
     List<SimpleTimelineDto> Timeline
@@ -37,7 +37,7 @@ public record SimpleTimelineDto(
     DateTime? End,
     int Status,
     string? Message = null,
-    int Counter = 0,
+    long Counter = 0,
     double Duration = 0
 );
 

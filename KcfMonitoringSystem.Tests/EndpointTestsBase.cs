@@ -14,6 +14,7 @@ public class EndpointTestsBase : WebApplicationFactory<Program>
     public Mock<IProductService> ProductServiceMock { get; } = new();
     public Mock<IProductionService> ProductionServiceMock { get; } = new();
     public Mock<IStatusService> StatusServiceMock { get; } = new();
+    public Mock<IMaintenanceService> MaintenanceServiceMock { get; } = new();
     public Mock<IReportService> ReportServiceMock { get; } = new();
 
     protected override IHost CreateHost(IHostBuilder builder)
@@ -26,6 +27,7 @@ public class EndpointTestsBase : WebApplicationFactory<Program>
             services.AddScoped(_ => ProductServiceMock.Object);
             services.AddScoped(_ => ProductionServiceMock.Object);
             services.AddScoped(_ => StatusServiceMock.Object);
+            services.AddScoped(_ => MaintenanceServiceMock.Object);
             services.AddScoped(_ => ReportServiceMock.Object);
             
             // We might need to mock or use InMemory DB for AppDbContext if the endpoints hit it directly (they shouldn't if using services)

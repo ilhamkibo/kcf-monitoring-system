@@ -25,4 +25,5 @@ public class User
 
     // Navigation
     public ICollection<Production> Productions { get; set; } = new List<Production>();
+    public ICollection<Maintenance> Maintenances { get; set; } = new List<Maintenance>();
 }

@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Production> Productions => Set<Production>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Status> Statuses => Set<Status>();
+    public DbSet<Maintenance> Maintenances => Set<Maintenance>();
     public DbSet<AlarmHistory> AlarmHistories => Set<AlarmHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -84,6 +85,26 @@ public class AppDbContext : DbContext
             .WithMany(p => p.Statuses)
             .HasForeignKey(s => s.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Maintenance -> Status (Many-to-One)
+        modelBuilder.Entity<Maintenance>(entity =>
+        {
+            entity.Property(m => m.Reason)
+                .HasMaxLength(500)
+                .IsRequired(false);
+
+            entity.HasIndex(m => m.StatusId);
+
+            entity.HasOne(m => m.Status)
+                .WithMany(s => s.Maintenances)
+                .HasForeignKey(m => m.StatusId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.MaintenanceOperator)
+                .WithMany(u => u.Maintenances)
+                .HasForeignKey(m => m.MaintenanceOperatorId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
 
         // AlarmHistory
         modelBuilder.Entity<AlarmHistory>(entity =>

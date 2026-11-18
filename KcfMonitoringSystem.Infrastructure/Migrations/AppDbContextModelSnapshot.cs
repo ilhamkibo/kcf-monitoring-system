@@ -109,6 +109,37 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                     b.ToTable("Machines");
                 });
 
+            modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Maintenance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("MaintenanceOperatorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaintenanceOperatorId");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("Maintenances");
+                });
+
             modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -157,8 +188,8 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("ActualQty")
-                        .HasColumnType("int");
+                    b.Property<long>("ActualQty")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -169,8 +200,8 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                     b.Property<int?>("ProductId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -210,8 +241,8 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                     b.Property<int>("ProductionId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Qty")
-                        .HasColumnType("int");
+                    b.Property<long>("Qty")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -285,6 +316,24 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Machine");
+
+                    b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Maintenance", b =>
+                {
+                    b.HasOne("KcfMonitoringSystem.Domain.Entities.User", "MaintenanceOperator")
+                        .WithMany("Maintenances")
+                        .HasForeignKey("MaintenanceOperatorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("KcfMonitoringSystem.Domain.Entities.Status", "Status")
+                        .WithMany("Maintenances")
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MaintenanceOperator");
 
                     b.Navigation("Status");
                 });
@@ -380,10 +429,14 @@ namespace KcfMonitoringSystem.Infrastructure.Migrations
             modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.Status", b =>
                 {
                     b.Navigation("AlarmHistories");
+
+                    b.Navigation("Maintenances");
                 });
 
             modelBuilder.Entity("KcfMonitoringSystem.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Maintenances");
+
                     b.Navigation("Productions");
                 });
 #pragma warning restore 612, 618
