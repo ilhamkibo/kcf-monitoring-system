@@ -170,9 +170,7 @@ public class StatusService : IStatusService
                                 period.Start,
                                 end,
                                 status.Code,
-                                status.Code == 2
-                                    ? status.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? ""
-                                    : "",
+                                GetTimelineMessage(status),
                                 status.Qty,
                                 period.Duration
                             );
@@ -197,6 +195,21 @@ public class StatusService : IStatusService
                 );
             })
             .ToList();
+    }
+
+    private static string GetTimelineMessage(KcfMonitoringSystem.Domain.Entities.Status status)
+    {
+        return status.Code switch
+        {
+            2 => status.AlarmHistories
+                .OrderBy(a => a.Id)
+                .FirstOrDefault()?.Message ?? string.Empty,
+            MaintenanceStatusCodes.UnderMaintenance or MaintenanceStatusCodes.PreventiveMaintenance =>
+                status.Maintenances
+                    .OrderByDescending(m => m.Id)
+                    .FirstOrDefault()?.Reason ?? string.Empty,
+            _ => string.Empty
+        };
     }
 
     private static IEnumerable<ActivitySegment> CreateDailyActivitySegments(

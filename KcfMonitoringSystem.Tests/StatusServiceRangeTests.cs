@@ -1,3 +1,4 @@
+using KcfMonitoringSystem.Application.Common;
 using KcfMonitoringSystem.Application.Filters;
 using KcfMonitoringSystem.Application.Interfaces.Repositories;
 using KcfMonitoringSystem.Application.Services;
@@ -62,6 +63,35 @@ public class StatusServiceRangeTests
         Assert.Equal(2, response.Data.Count);
         Assert.All(response.Data, activity =>
             Assert.Equal(3_600, Assert.Single(activity.Details).TotalTime));
+    }
+
+    [Theory]
+    [InlineData(MaintenanceStatusCodes.UnderMaintenance)]
+    [InlineData(MaintenanceStatusCodes.PreventiveMaintenance)]
+    public async Task GetTimelineAsync_UsesLatestMaintenanceReasonAsMessage(int statusCode)
+    {
+        var status = CreateStatus(
+            new DateTime(2026, 11, 1, 10, 0, 0),
+            new DateTime(2026, 11, 1, 11, 0, 0),
+            new DateTime(2026, 11, 1, 10, 0, 0),
+            new DateTime(2026, 11, 1, 11, 0, 0));
+        status.Code = statusCode;
+        status.Maintenances =
+        [
+            new Maintenance { Id = 1, Status = status, StatusId = status.Id, Reason = "Old reason" },
+            new Maintenance { Id = 2, Status = status, StatusId = status.Id, Reason = "Latest reason" }
+        ];
+
+        var repository = new Mock<IStatusRepository>();
+        repository
+            .Setup(x => x.GetTimelineStatusesAsync(It.IsAny<StatusFilter>()))
+            .ReturnsAsync([status]);
+        var service = new StatusService(repository.Object);
+
+        var response = await service.GetTimelineAsync(new StatusFilter());
+
+        var timeline = Assert.Single(Assert.Single(Assert.Single(response.Data).Production).Timeline);
+        Assert.Equal("Latest reason", timeline.Message);
     }
 
     private static Status CreateStatus(

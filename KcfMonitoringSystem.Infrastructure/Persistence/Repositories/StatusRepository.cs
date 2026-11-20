@@ -66,6 +66,9 @@ public class StatusRepository : IStatusRepository
             .Include(x => x.Production)
                 .ThenInclude(p => p.Product)
             .Include(x => x.AlarmHistories)
+            .Include(x => x.Maintenances)
+            .AsSplitQuery()
+            .AsNoTracking()
             .AsQueryable();
 
         if (filter.MachineId.HasValue)
@@ -152,6 +155,9 @@ public class StatusRepository : IStatusRepository
             .Include(x => x.Production)
                 .ThenInclude(p => p.Product)
             .Include(x => x.AlarmHistories)
+            .Include(x => x.Maintenances)
+            .AsSplitQuery()
+            .AsNoTracking()
             .AsQueryable();
 
         if (filter.MachineId.HasValue)

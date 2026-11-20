@@ -48,7 +48,8 @@ public class ReportService : IReportService
 
         foreach (var group in groups)
         {
-            double dandoriSecs = CalculateStatusDurationSeconds(group.SelectMany(p => p.Statuses), 3);
+            var statusDurations = CalculateStatusDurations(group.SelectMany(p => p.Statuses));
+            double dandoriSecs = statusDurations.DandoriSeconds;
             if (dandoriSecs <= 0) continue;
 
             int month = group[0].CreatedAt.Month;
@@ -205,9 +206,9 @@ public class ReportService : IReportService
                 .ToList();
 
             var allStatuses = currentGroup.SelectMany(p => p.Statuses).ToList();
-
-            double dandoriSecs = CalculateStatusDurationSeconds(allStatuses, 3);
-            double runningSecs = CalculateStatusDurationSeconds(allStatuses, 1, 2, 4);
+            var statusDurations = CalculateStatusDurations(allStatuses);
+            double dandoriSecs = statusDurations.DandoriSeconds;
+            double runningSecs = statusDurations.RunningSeconds;
 
             int dandoriMinutes = (int)Math.Round(dandoriSecs / 60.0, MidpointRounding.AwayFromZero);
             int runningMinutes = (int)Math.Round(runningSecs / 60.0, MidpointRounding.AwayFromZero);
@@ -283,11 +284,44 @@ public class ReportService : IReportService
         return groups;
     }
 
-    private static double CalculateStatusDurationSeconds(IEnumerable<Status> statuses, params int[] codes)
+    private static StatusDurationTotals CalculateStatusDurations(IEnumerable<Status> statuses)
     {
-        return statuses
-            .Where(s => codes.Contains(s.Code))
-            .Sum(s => (double)s.Duration);
+        double dandoriSeconds = 0;
+        double runningSeconds = 0;
+        bool hasRunningStarted = false;
+
+        foreach (var status in statuses.OrderBy(s => s.CreatedAt).ThenBy(s => s.Id))
+        {
+            if (!hasRunningStarted)
+            {
+                if (status.Code == 1)
+                {
+                    hasRunningStarted = true;
+                    runningSeconds += status.Duration;
+                }
+                else
+                {
+                    dandoriSeconds += status.Duration;
+                }
+
+                continue;
+            }
+
+            if (status.Code == 3)
+            {
+                dandoriSeconds += status.Duration;
+            }
+            else if (status.Code is 1 or 2 or 4)
+            {
+                runningSeconds += status.Duration;
+            }
+        }
+
+        return new StatusDurationTotals(dandoriSeconds, runningSeconds);
     }
+
+    private readonly record struct StatusDurationTotals(
+        double DandoriSeconds,
+        double RunningSeconds);
 }
 
