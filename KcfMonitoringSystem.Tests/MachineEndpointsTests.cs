@@ -23,7 +23,7 @@ public class MachineEndpointsTests : IClassFixture<EndpointTestsBase>
     public async Task GetAll_ReturnsOk()
     {
         // Arrange
-        var machines = new List<MachineDto> { new(1, "Machine 1", DateTime.Now) };
+        var machines = new List<MachineDto> { new(1, "Machine 1", 1, DateTime.Now) };
         var response = ApiPagedResponse<List<MachineDto>>.Ok(machines, "Success");
         
         _factory.MachineServiceMock
@@ -45,7 +45,7 @@ public class MachineEndpointsTests : IClassFixture<EndpointTestsBase>
     public async Task GetById_ReturnsOk()
     {
         // Arrange
-        var machine = new MachineDto(1, "Machine 1", DateTime.Now);
+        var machine = new MachineDto(1, "Machine 1", 1, DateTime.Now);
         var response = ApiResponse<MachineDto>.Ok(machine);
 
         _factory.MachineServiceMock
@@ -67,8 +67,8 @@ public class MachineEndpointsTests : IClassFixture<EndpointTestsBase>
     public async Task Create_ReturnsCreated()
     {
         // Arrange
-        var dto = new CreateMachineDto("New Machine");
-        var machine = new MachineDto(1, "New Machine", DateTime.Now);
+        var dto = new CreateMachineDto("New Machine", 1);
+        var machine = new MachineDto(1, "New Machine", 1, DateTime.Now);
         var response = ApiResponse<MachineDto>.Ok(machine);
 
         _factory.MachineServiceMock
@@ -86,8 +86,8 @@ public class MachineEndpointsTests : IClassFixture<EndpointTestsBase>
     public async Task Update_ReturnsOk()
     {
         // Arrange
-        var dto = new UpdateMachineDto("Updated Machine");
-        var machine = new MachineDto(1, "Updated Machine", DateTime.Now);
+        var dto = new UpdateMachineDto("Updated Machine", 1);
+        var machine = new MachineDto(1, "Updated Machine", 1, DateTime.Now);
         var response = ApiResponse<MachineDto>.Ok(machine);
 
         _factory.MachineServiceMock

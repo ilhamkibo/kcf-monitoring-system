@@ -23,8 +23,14 @@ public class StatusService : IStatusService
 
         var (statuses, totalCount) = await _repository.GetAllAsync(filter);
 
-        var data = statuses.Select(
-            x => new StatusDto(
+        var hasDateRange = StatusRangeClipper.HasDateRange(filter.StartDate, filter.EndDate);
+        var data = statuses.Select(x =>
+        {
+            var period = hasDateRange
+                ? StatusRangeClipper.Clip(x, filter.StartDate, filter.EndDate)
+                : new ClippedStatusPeriod(x.CreatedAt, x.UpdatedAt, x.Duration, x.UpdatedAt ?? x.CreatedAt);
+
+            return new StatusDto(
                 x.Id,
                 x.MachineId,
                 x.Machine.Name,
@@ -34,12 +40,12 @@ public class StatusService : IStatusService
                 x.Production.ProductId,
                 x.Production.Product?.PartName,
                 x.Production.Product?.PartNo,
-                x.CreatedAt,
-                x.UpdatedAt,
-                x.Duration,
+                period.Start,
+                period.End,
+                period.Duration,
                 x.Qty
-            )
-        ).ToList();
+            );
+        }).ToList();
 
         PaginationMetadata? pagination = null;
         if (filter.Paginate == true)
@@ -64,87 +70,7 @@ public class StatusService : IStatusService
 
         var statuses = await _repository.GetTimelineStatusesAsync(filter);
 
-        var today = DateTime.Now.Date;
-        var isToday = (filter.StartDate == null || filter.StartDate.Value.Date <= today) &&
-                      (filter.EndDate == null || filter.EndDate.Value.Date >= today);
-
-        var data = statuses
-            .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
-            .Select(g =>
-            {
-                // Find the globally last status (highest Id) for this machine
-                var latestStatus = g
-                    .OrderByDescending(s => s.Id)
-                    .FirstOrDefault();
-
-                var productions = g
-                    .GroupBy(s => new
-                    {
-                        UserName = s.Production.User.Name,
-                        ProductName = s.Production.Product?.PartName,
-                        s.Production.Product?.PartNo,
-                        Quantity = s.Production.ActualQty,
-                        s.Production.CreatedAt,
-                        s.Production.UpdatedAt,
-                    })
-                    .Select(pg =>
-                    {
-                        var timeline = pg.Select(s => new SimpleTimelineDto(
-                            s.CreatedAt,
-                            s.UpdatedAt,
-                            s.Code,
-                            s.Code == 2
-                                ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
-                                : "",
-                            s.Qty,
-                            s.Duration
-                        )).ToList();
-
-                        return new ProductionTimelineDto(
-                            pg.Key.UserName,
-                            pg.Key.ProductName,
-                            pg.Key.PartNo,
-                            pg.Key.Quantity,
-                            pg.Key.CreatedAt,
-                            pg.Key.UpdatedAt,
-                            timeline
-                        );
-                    })
-                    .ToList();
-
-                // Only set null end on the actual running status (last status of last production)
-                // and only when the query covers today
-                if (isToday && latestStatus != null)
-                {
-                    foreach (var prod in productions)
-                    {
-                        for (int i = 0; i < prod.Timeline.Count; i++)
-                        {
-                            var t = prod.Timeline[i];
-                            if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
-                            {
-                                prod.Timeline[i] = new SimpleTimelineDto(
-                                    t.Start,
-                                    null,
-                                    t.Status,
-                                    t.Message,
-                                    t.Counter,
-                                    t.Duration
-                                );
-                                goto done;
-                            }
-                        }
-                    }
-                }
-            done:
-
-                return new StatusTimelineDto(
-                    g.Key.MachineId,
-                    g.Key.MachineName,
-                    productions
-                );
-            })
-            .ToList();
+        var data = BuildTimelineData(statuses, filter);
 
         return ApiResponse<List<StatusTimelineDto>>.Ok(data, "Success");
     }
@@ -157,19 +83,29 @@ public class StatusService : IStatusService
 
         var statuses = await _repository.GetActivityStatusesAsync(filter);
 
-        var data = statuses
-            .GroupBy(s => s.CreatedAt.Date)
+        var hasDateRange = StatusRangeClipper.HasDateRange(filter.StartDate, filter.EndDate);
+        var activitySegments = hasDateRange
+            ? statuses.SelectMany(s => CreateDailyActivitySegments(s, filter.StartDate, filter.EndDate))
+            : statuses.Select(s => new ActivitySegment(
+                s.CreatedAt.Date,
+                s.Production.User.Name,
+                s.Production.Product?.ProductNo ?? string.Empty,
+                s.Code,
+                s.Duration));
+
+        var data = activitySegments
+            .GroupBy(s => s.Date)
             .Select(g => new ActivityDto(
                 g.Key,
-                g.GroupBy(s => new { OperatorName = s.Production.User.Name, ProductName = s.Production.Product!.ProductNo, s.Code })
-                 .Select(sd => new ActivityDetailDto(
-                     sd.Key.OperatorName,
-                     sd.Key.ProductName,
-                     sd.Sum(s => s.Duration),
-                     sd.Key.Code
-                 ))
-                 .OrderBy(x => x.Operator)
-                 .ToList()
+                g.GroupBy(s => new { s.OperatorName, s.ProductName, s.Code })
+                    .Select(sd => new ActivityDetailDto(
+                        sd.Key.OperatorName,
+                        sd.Key.ProductName,
+                        sd.Sum(s => s.Duration),
+                        sd.Key.Code
+                    ))
+                    .OrderBy(x => x.Operator)
+                    .ToList()
             ))
             .OrderByDescending(x => x.Date)
             .ToList();
@@ -185,19 +121,26 @@ public class StatusService : IStatusService
 
         var statuses = await _repository.GetLatestProductStatusesAsync(filter);
 
+        var data = BuildTimelineData(statuses, filter);
+
+        return ApiResponse<List<StatusTimelineDto>>.Ok(data, "Success");
+    }
+
+    private static List<StatusTimelineDto> BuildTimelineData(
+        List<KcfMonitoringSystem.Domain.Entities.Status> statuses,
+        StatusFilter filter)
+    {
         var today = DateTime.Now.Date;
-        var isToday = (filter.StartDate == null || filter.StartDate.Value.Date <= today) &&
-                      (filter.EndDate == null || filter.EndDate.Value.Date >= today);
+        var isToday = (!filter.StartDate.HasValue || filter.StartDate.Value.Date <= today) &&
+                      (!filter.EndDate.HasValue || filter.EndDate.Value.Date > today);
+        var hasDateRange = StatusRangeClipper.HasDateRange(filter.StartDate, filter.EndDate);
 
-        var data = statuses
+        return statuses
             .GroupBy(s => new { s.MachineId, MachineName = s.Machine.Name })
-            .Select(g =>
+            .Select(machineGroup =>
             {
-                var latestStatus = g
-                    .OrderByDescending(s => s.Id)
-                    .FirstOrDefault();
-
-                var productions = g
+                var latestStatusId = machineGroup.Max(s => s.Id);
+                var productions = machineGroup
                     .GroupBy(s => new
                     {
                         UserName = s.Production.User.Name,
@@ -207,63 +150,88 @@ public class StatusService : IStatusService
                         s.Production.CreatedAt,
                         s.Production.UpdatedAt,
                     })
-                    .Select(pg =>
+                    .Select(productionGroup =>
                     {
-                        var timeline = pg.Select(s => new SimpleTimelineDto(
-                            s.CreatedAt,
-                            s.UpdatedAt,
-                            s.Code,
-                            s.Code == 2
-                                ? (s.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? "")
-                                : "",
-                            s.Qty,
-                            s.Duration
-                        )).ToList();
+                        var timeline = productionGroup.Select(status =>
+                        {
+                            var period = hasDateRange
+                                ? StatusRangeClipper.Clip(status, filter.StartDate, filter.EndDate)
+                                : new ClippedStatusPeriod(
+                                    status.CreatedAt,
+                                    status.UpdatedAt,
+                                    status.Duration,
+                                    status.UpdatedAt ?? status.CreatedAt);
+
+                            var end = isToday && status.Id == latestStatusId
+                                ? null
+                                : period.End;
+
+                            return new SimpleTimelineDto(
+                                period.Start,
+                                end,
+                                status.Code,
+                                status.Code == 2
+                                    ? status.AlarmHistories.OrderBy(a => a.Id).FirstOrDefault()?.Message ?? ""
+                                    : "",
+                                status.Qty,
+                                period.Duration
+                            );
+                        }).ToList();
 
                         return new ProductionTimelineDto(
-                            pg.Key.UserName,
-                            pg.Key.ProductName,
-                            pg.Key.PartNo,
-                            pg.Key.Quantity,
-                            pg.Key.CreatedAt,
-                            pg.Key.UpdatedAt,
+                            productionGroup.Key.UserName,
+                            productionGroup.Key.ProductName,
+                            productionGroup.Key.PartNo,
+                            productionGroup.Key.Quantity,
+                            productionGroup.Key.CreatedAt,
+                            productionGroup.Key.UpdatedAt,
                             timeline
                         );
                     })
                     .ToList();
 
-                if (isToday && latestStatus != null)
-                {
-                    foreach (var prod in productions)
-                    {
-                        for (int i = 0; i < prod.Timeline.Count; i++)
-                        {
-                            var t = prod.Timeline[i];
-                            if (t.Start == latestStatus.CreatedAt && t.Status == latestStatus.Code)
-                            {
-                                prod.Timeline[i] = new SimpleTimelineDto(
-                                    t.Start,
-                                    null,
-                                    t.Status,
-                                    t.Message,
-                                    t.Counter,
-                                    t.Duration
-                                );
-                                goto done;
-                            }
-                        }
-                    }
-                }
-            done:
-
                 return new StatusTimelineDto(
-                    g.Key.MachineId,
-                    g.Key.MachineName,
+                    machineGroup.Key.MachineId,
+                    machineGroup.Key.MachineName,
                     productions
                 );
             })
             .ToList();
-
-        return ApiResponse<List<StatusTimelineDto>>.Ok(data, "Success");
     }
+
+    private static IEnumerable<ActivitySegment> CreateDailyActivitySegments(
+        KcfMonitoringSystem.Domain.Entities.Status status,
+        DateTime? startDate,
+        DateTime? endDate)
+    {
+        var period = StatusRangeClipper.Clip(status, startDate, endDate);
+        var segmentStart = period.Start;
+        var effectiveEnd = period.EffectiveEnd;
+
+        while (segmentStart < effectiveEnd)
+        {
+            var nextDay = segmentStart.Date.AddDays(1);
+            var segmentEnd = effectiveEnd < nextDay ? effectiveEnd : nextDay;
+            var duration = (int)Math.Max(0, Math.Floor((segmentEnd - segmentStart).TotalSeconds));
+
+            if (duration > 0)
+            {
+                yield return new ActivitySegment(
+                    segmentStart.Date,
+                    status.Production.User.Name,
+                    status.Production.Product?.ProductNo ?? string.Empty,
+                    status.Code,
+                    duration);
+            }
+
+            segmentStart = segmentEnd;
+        }
+    }
+
+    private sealed record ActivitySegment(
+        DateTime Date,
+        string OperatorName,
+        string ProductName,
+        int Code,
+        int Duration);
 }
