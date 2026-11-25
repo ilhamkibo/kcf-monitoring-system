@@ -313,26 +313,39 @@ public class MqttWorker : BackgroundService
             await db.SaveChangesAsync();
         }
 
-        _logger.LogInformation(
-            "Data saved for [{Topic}]. Production: Id={ProductionId}, MachineId={MachineId}, UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}, ActualQty={ActualQty}, CreatedAt={ProductionCreatedAt}, UpdatedAt={ProductionUpdatedAt}; Status: Id={StatusId}, Code={StatusCode}, Qty={StatusQty}, Duration={StatusDuration}, CreatedAt={StatusCreatedAt}, UpdatedAt={StatusUpdatedAt}; Production Changed={ProductionChanged}, Status Changed={StatusChanged}, Maintenance Changed={MaintenanceChanged}",
+        if (productionChanged)
+        {
+            _logger.LogInformation(
+                "[{Topic}] New production created: Id={ProductionId}, MachineId={MachineId}, UserId={UserId}, ProductId={ProductId}, Qty={Quantity}, ActualQty={ActualQty}",
+                topic,
+                latestProduction.Id,
+                latestProduction.MachineId,
+                latestProduction.UserId,
+                latestProduction.ProductId,
+                latestProduction.Quantity,
+                latestProduction.ActualQty);
+        }
+
+        if (statusChanged)
+        {
+            _logger.LogInformation(
+                "[{Topic}] New status created: Id={StatusId}, MachineId={MachineId}, Code={StatusCode}, Qty={StatusQty}, ProductionId={ProductionId}",
+                topic,
+                latestStatus.Id,
+                latestStatus.MachineId,
+                latestStatus.Code,
+                latestStatus.Qty,
+                latestStatus.ProductionId);
+        }
+
+        _logger.LogDebug(
+            "Data updated for [{Topic}]. ProductionId={ProductionId}, StatusId={StatusId}, Code={StatusCode}, Qty={StatusQty}, Duration={StatusDuration}",
             topic,
             latestProduction.Id,
-            latestProduction.MachineId,
-            latestProduction.UserId,
-            latestProduction.ProductId,
-            latestProduction.Quantity,
-            latestProduction.ActualQty,
-            latestProduction.CreatedAt,
-            latestProduction.UpdatedAt,
             latestStatus.Id,
             latestStatus.Code,
             latestStatus.Qty,
-            latestStatus.Duration,
-            latestStatus.CreatedAt,
-            latestStatus.UpdatedAt,
-            productionChanged,
-            statusChanged,
-            maintenanceChanged);
+            latestStatus.Duration);
     }
 
     private async Task<int?> GetMachineIdAsync(AppDbContext db, string machineName, string topic)
